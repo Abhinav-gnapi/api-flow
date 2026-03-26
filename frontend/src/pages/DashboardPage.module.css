@@ -1,0 +1,192 @@
+.page {
+  padding: 28px 32px;
+  /* max-width: 1400px; */
+}
+
+.pageHeader {
+  margin-bottom: 28px;
+}
+
+.pageTitle {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.pageSubtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 3px;
+}
+
+.section {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 20px 24px;
+}
+
+.loadingCenter {
+  display: flex;
+  justify-content: center;
+  padding: 48px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.configCard {
+  cursor: pointer;
+  transition: box-shadow 0.15s, border-color 0.15s;
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+}
+
+.configCard:hover {
+  box-shadow: var(--shadow-md);
+  border-color: #d1d5db;
+}
+
+.cardTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.configName {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.deleteBtn {
+  border: 1px solid var(--red-500);
+  background: transparent;
+  color: var(--red-500);
+  border-radius: var(--radius-sm);
+  width: 24px; height: 24px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.deleteBtn:hover { background: #fff1f1; }
+
+.cardMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.method {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.url {
+  font-size: 12px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lastRun {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* Form */
+.form { display: flex; flex-direction: column; gap: 14px; }
+.row  { display: flex; align-items: flex-end; gap: 10px; }
+.modalActions { display: flex; justify-content: flex-end; gap: 8px; padding-top: 4px; }
+
+/* Delete confirmation snackbar */
+.deleteConfirmToast {
+  min-width: 320px;
+  max-width: min(92vw, 420px);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: 12px 14px;
+}
+
+.deleteConfirmToastIn {
+  animation: deleteConfirmToastIn 0.18s ease-out;
+}
+
+.deleteConfirmToastOut {
+  animation: deleteConfirmToastOut 0.16s ease-in forwards;
+}
+
+.deleteConfirmTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.deleteConfirmText {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+  word-break: break-word;
+}
+
+.deleteConfirmActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.deleteConfirmBtn {
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  cursor: pointer;
+}
+
+.deleteConfirmBtnCancel {
+  border-color: var(--border);
+  color: var(--text-secondary);
+  background: transparent;
+}
+
+.deleteConfirmBtnCancel:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.deleteConfirmBtnDelete {
+  border-color: var(--red-500);
+  color: #fff;
+  background: var(--red-500);
+}
+
+.deleteConfirmBtnDelete:hover {
+  background: var(--red-600);
+}
+
+@keyframes deleteConfirmToastIn {
+  from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes deleteConfirmToastOut {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(-6px) scale(0.98); }
+}

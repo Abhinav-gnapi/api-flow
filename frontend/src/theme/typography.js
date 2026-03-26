@@ -1,0 +1,84 @@
+export const Typography = {
+  fontFamily: 'Roboto',
+  h1: {
+    fontSize: '3rem',
+    fontWeight: 300,
+    lineHeight: '112px',
+    letterSpacing: '-1.5px',
+  },
+  h2: {
+    fontSize: '2.5rem',
+    fontWeight: 300,
+    lineHeight: '72px',
+    letterSpacing: '-0.5px',
+  },
+  h3: {
+    fontSize: '2rem',
+    fontWeight: 400,
+    lineHeight: '56px',
+    letterSpacing: '0px',
+  },
+  h4: {
+    fontSize: '1.75rem',
+    fontWeight: 400,
+    lineHeight: '40px',
+    letterSpacing: '0.25px',
+  },
+  h5: {
+    fontSize: '1.5rem',
+    fontWeight: 400,
+    lineHeight: '32px',
+    letterSpacing: '0px',
+  },
+  h6: {
+    fontSize: '1.25rem',
+    fontWeight: 500,
+    lineHeight: '28px',
+    letterSpacing: '0.15px',
+  },
+  subtitle1: {
+    fontSize: '1rem',
+    fontWeight: 400,
+    lineHeight: '24px',
+    letterSpacing: '0.15px',
+  },
+  subtitle2: {
+    fontSize: '0.875rem',
+    fontWeight: 500,
+    lineHeight: '21px',
+    letterSpacing: '0.1px',
+  },
+  body1: {
+    fontSize: '1rem',
+    fontWeight: 400,
+    lineHeight: '24px',
+    letterSpacing: '0.5px',
+  },
+  body2: {
+    fontSize: '0.875rem',
+    fontWeight: 400,
+    lineHeight: '20px',
+    letterSpacing: '0.25px',
+  },
+  button: {
+    fontSize: '0.875rem',
+    fontWeight: 500,
+    lineHeight: '17px',
+    letterSpacing: '0.75px',
+    textTransform: 'uppercase',
+  },
+  caption: {
+    fontSize: '0.75rem',
+    fontWeight: 400,
+    lineHeight: '16px',
+    letterSpacing: '0.4px',
+  },
+  overline: {
+    fontSize: '0.625rem',
+    fontWeight: 400,
+    lineHeight: '15px',
+    letterSpacing: '1.5px',
+    textTransform: 'uppercase',
+  },
+};
+
