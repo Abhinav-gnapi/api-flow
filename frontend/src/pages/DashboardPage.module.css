@@ -8,14 +8,18 @@
 }
 
 .pageTitle {
-  font-size: 22px;
+  font-size: var(--type-h5-font-size);
   font-weight: 700;
+  line-height: var(--type-h5-line-height);
+  letter-spacing: var(--type-h5-letter-spacing);
   color: var(--text-primary);
-  letter-spacing: -0.02em;
 }
 
 .pageSubtitle {
-  font-size: 13px;
+  font-size: var(--type-body2-font-size);
+  font-weight: var(--type-body2-font-weight);
+  line-height: var(--type-body2-line-height);
+  letter-spacing: var(--type-body2-letter-spacing);
   color: var(--text-muted);
   margin-top: 3px;
 }
@@ -55,13 +59,20 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
+  gap: 8px;
   margin-bottom: 6px;
+  min-width: 0;
 }
 
 .configName {
-  font-size: 14px;
+  font-size: var(--type-subtitle1-font-size);
   font-weight: 600;
+  line-height: var(--type-subtitle1-line-height);
+  letter-spacing: var(--type-subtitle1-letter-spacing);
   color: var(--text-primary);
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .deleteBtn {
@@ -80,19 +91,30 @@
 
 .cardMeta {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
   margin-bottom: 6px;
+  min-width: 0;
 }
 
 .method {
-  font-size: 13px;
+  font-size: var(--type-subtitle2-font-size);
   font-weight: 700;
+  line-height: var(--type-subtitle2-line-height);
+  letter-spacing: var(--type-subtitle2-letter-spacing);
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .url {
-  font-size: 12px;
+  font-size: var(--type-body2-font-size);
+  font-weight: var(--type-body2-font-weight);
+  line-height: var(--type-body2-line-height);
+  letter-spacing: var(--type-body2-letter-spacing);
   color: var(--text-muted);
+  flex: 1;
+  min-width: 0;
+  display: block;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -102,9 +124,13 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 11px;
+  font-size: var(--type-caption-font-size);
+  font-weight: var(--type-caption-font-weight);
+  line-height: var(--type-caption-line-height);
+  letter-spacing: var(--type-caption-letter-spacing);
   color: var(--text-muted);
   margin-top: 4px;
+  min-width: 0;
 }
 
 /* Form */
@@ -132,13 +158,18 @@
 }
 
 .deleteConfirmTitle {
-  font-size: 13px;
+  font-size: var(--type-subtitle2-font-size);
   font-weight: 700;
+  line-height: var(--type-subtitle2-line-height);
+  letter-spacing: var(--type-subtitle2-letter-spacing);
   color: var(--text-primary);
 }
 
 .deleteConfirmText {
-  font-size: 12px;
+  font-size: var(--type-body2-font-size);
+  font-weight: var(--type-body2-font-weight);
+  line-height: var(--type-body2-line-height);
+  letter-spacing: var(--type-body2-letter-spacing);
   color: var(--text-secondary);
   margin-top: 4px;
   word-break: break-word;
@@ -154,10 +185,27 @@
 .deleteConfirmBtn {
   border: 1px solid transparent;
   border-radius: var(--radius-md);
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--type-button-font-size);
+  font-weight: var(--type-button-font-weight);
+  line-height: var(--type-button-line-height);
+  letter-spacing: var(--type-button-letter-spacing);
+  text-transform: var(--type-button-text-transform);
   padding: 5px 12px;
   cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .page {
+    padding: 18px 14px;
+  }
+
+  .section {
+    padding: 14px;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .deleteConfirmBtnCancel {

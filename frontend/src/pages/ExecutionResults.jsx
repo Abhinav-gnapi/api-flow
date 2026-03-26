@@ -35,6 +35,14 @@ function rowAvgLatency(report) {
   const lats = (report.results || []).map(r => r.latencyMs).filter(Boolean);
   return lats.length ? Math.round(lats.reduce((a, b) => a + b, 0) / lats.length) : null;
 }
+function escapeHtml(value) {
+  return String(value ?? '-')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/\'/g, '&#39;');
+}
 
 /* ─────────────────────────────────────────────────────────────
    Sub-components
@@ -67,17 +75,32 @@ function StatCard({ label, value, sub, subColor, valueColor }) {
 ───────────────────────────────────────────────────────────── */
 function downloadReportPDF(report) {
   const win = window.open('', '_blank');
-  if (!win) { toast.error('Popup blocked — allow popups and retry'); return; }
+  if (!win) { toast.error('Popup blocked - allow popups and retry'); return; }
 
   const rowAvg = rowAvgLatency(report);
+  const safeConfigName = escapeHtml(report.configName);
+  const safeMethod = escapeHtml(report.method);
+  const safeUrl = escapeHtml(report.url);
+  const safeRunAt = escapeHtml(new Date(report.runAt).toLocaleString());
 
-  const resultRows = (report.results || []).map((r, i) => `
+  const resultRows = (report.results || []).map((r, i) => {
+    const payloadBody = escapeHtml(JSON.stringify(r.payloadBody ?? {}, null, 2));
+    const responseBody = escapeHtml(
+      typeof r.error === 'string'
+        ? r.error
+        : JSON.stringify(r.response ?? {}, null, 2)
+    );
+    const payloadName = escapeHtml(r.payloadName || '-');
+    const edgeCaseType = escapeHtml(r.edgeCaseType || '-');
+    const statusText = escapeHtml(r.statusText || '');
+
+    return `
     <tr style="background:${i % 2 === 0 ? '#fff' : '#f9fafb'};border-left:3px solid ${r.passed ? '#22c55e' : '#ef4444'}">
-      <td style="padding:10px 14px;font-weight:600;font-size:13px">${r.payloadName || '—'}</td>
-      <td style="padding:10px 14px;font-size:12px;font-family:monospace">${r.edgeCaseType || '—'}</td>
-      <td style="padding:10px 14px;font-size:12px;font-family:monospace">${r.statusCode} ${r.statusText || ''}</td>
-      <td style="padding:10px 14px;font-size:12px;font-family:monospace">${r.latencyMs ?? '—'}ms</td>
-      <td style="padding:10px 14px;font-weight:700;font-size:12px;color:${r.passed ? '#16a34a' : '#dc2626'}">${r.passed ? '✓ PASS' : '✕ FAIL'}</td>
+      <td style="padding:10px 14px;font-weight:600;font-size:13px">${payloadName}</td>
+      <td style="padding:10px 14px;font-size:12px;font-family:monospace">${edgeCaseType}</td>
+      <td style="padding:10px 14px;font-size:12px;font-family:monospace">${r.statusCode} ${statusText}</td>
+      <td style="padding:10px 14px;font-size:12px;font-family:monospace">${r.latencyMs ?? '-'}ms</td>
+      <td style="padding:10px 14px;font-weight:700;font-size:12px;color:${r.passed ? '#16a34a' : '#dc2626'}">${r.passed ? 'PASS' : 'FAIL'}</td>
     </tr>
     ${!r.passed ? `
     <tr style="background:#fff5f5">
@@ -85,22 +108,23 @@ function downloadReportPDF(report) {
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
           <div>
             <div style="font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;margin-bottom:4px">Request Payload</div>
-            <pre style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:8px;font-size:11px;overflow:auto;max-height:120px;white-space:pre-wrap">${JSON.stringify(r.payloadBody, null, 2)}</pre>
+            <pre style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:8px;font-size:11px;overflow:auto;max-height:120px;white-space:pre-wrap">${payloadBody}</pre>
           </div>
           <div>
             <div style="font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;margin-bottom:4px">Response</div>
-            <pre style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:8px;font-size:11px;overflow:auto;max-height:120px;white-space:pre-wrap">${r.error || JSON.stringify(r.response, null, 2)}</pre>
+            <pre style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:8px;font-size:11px;overflow:auto;max-height:120px;white-space:pre-wrap">${responseBody}</pre>
           </div>
         </div>
       </td>
     </tr>` : ''}
-  `).join('');
+  `;
+  }).join('');
 
   win.document.write(`<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8"/>
-  <title>Report · ${report.configName}</title>
+  <title>Report - ${safeConfigName}</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', sans-serif; background: #fff; color: #111827; padding: 40px; }
@@ -119,8 +143,8 @@ function downloadReportPDF(report) {
   </style>
 </head>
 <body>
-  <h1>Report · ${report.configName}</h1>
-  <div class="meta">${report.method} ${report.url} &nbsp;·&nbsp; Run: ${new Date(report.runAt).toLocaleString()}</div>
+  <h1>Report - ${safeConfigName}</h1>
+  <div class="meta">${safeMethod} ${safeUrl} &nbsp;-&nbsp; Run: ${safeRunAt}</div>
   <div class="summary">
     <span class="chip chip-neutral">Total: ${report.totalPayloads}</span>
     <span class="chip chip-neutral">Executed: ${report.executed}</span>
@@ -555,3 +579,4 @@ export default function ExecutionResults() {
     </div>
   );
 }
+

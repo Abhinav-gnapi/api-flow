@@ -218,7 +218,7 @@ export default function ConfigEditorPage() {
       <div className={styles.topbar}>
         <div className={styles.topbarLeft}>
           <button className={styles.backBtn} onClick={() => navigate('/')}><ArrowLeft size={16} /></button>
-          <div>
+          <div className={styles.configInfo}>
             <div className={styles.configTitle}>{config.name}</div>
             <div className={styles.configMeta}>
               {config.method} · {config.url}
