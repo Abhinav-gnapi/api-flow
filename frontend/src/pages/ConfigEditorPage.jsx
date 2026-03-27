@@ -25,6 +25,10 @@ function parseJson(str) {
   catch { return null; }
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export default function ConfigEditorPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -170,7 +174,7 @@ export default function ConfigEditorPage() {
     }
   };
 
-  const handleRunAll = async () => {
+  const handleGenerateReport = async () => {
     if (!payloads.length) return toast.error('No payloads to run');
     setRunningAll(true);
     try {
@@ -191,6 +195,40 @@ export default function ConfigEditorPage() {
     }
   };
 
+  const handleRunAllWithDelay = async () => {
+    if (!payloads.length) return toast.error('No payloads to run');
+
+    setRunningAll(true);
+    try {
+      let passed = 0;
+      const runDelayMs = 300;
+
+      for (let i = 0; i < payloads.length; i++) {
+        const payload = payloads[i];
+        const result = await runnerApi.runOne(id, payload._id);
+        if (result.passed) passed += 1;
+
+        const updatedPayload = { ...payload, lastResult: { ...result, runAt: new Date() } };
+        setPayloads((prev) => prev.map((p) => (p._id === updatedPayload._id ? updatedPayload : p)));
+
+        if (selectedPayload?._id === updatedPayload._id) {
+          setSelected(updatedPayload);
+          setLastResponse(result);
+        }
+
+        if (i < payloads.length - 1) {
+          await sleep(runDelayMs);
+        }
+      }
+
+      toast.success(`Run complete: ${passed}/${payloads.length} passed`);
+    } catch (e) {
+      toast.error(e.message);
+    } finally {
+      setRunningAll(false);
+    }
+  };
+
   const handleGenerateAI = async () => {
     const dto = parseJson(dtoStr);
     if (!dtoStr.trim()) return toast.error('Enter a payload DTO first');
@@ -201,6 +239,17 @@ export default function ConfigEditorPage() {
       const res = await aiApi.generateEdgeCases({ configId: id, dto, method, url, count: aiCount });
       const plds = await payloadsApi.getByConfig(id);
       setPayloads(plds);
+      if (plds.length) {
+        const currentId = selectedPayload?._id;
+        const toSelect = currentId
+          ? plds.find((p) => p._id === currentId) || plds[0]
+          : plds[0];
+        selectPayload(toSelect);
+      } else {
+        setSelected(null);
+        setPayloadName('');
+        setPayloadBody('{}');
+      }
       toast.success(`Generated ${res.count} edge cases`);
     } catch (e) {
       toast.error(e.message);
@@ -231,7 +280,7 @@ export default function ConfigEditorPage() {
           <Button variant="outline" size="sm" onClick={handleSaveConfig} loading={savingConfig}>
             <Save size={13} /> Save
           </Button>
-          <Button size="sm" onClick={handleRunAll} loading={runningAll}>
+          <Button size="sm" onClick={handleGenerateReport} loading={runningAll}>
             <BarChart2 size={13} /> Generate report
           </Button>
         </div>
@@ -305,7 +354,7 @@ export default function ConfigEditorPage() {
                 <Button size="sm" onClick={handleRunOne} loading={running}>
                   <Play size={12} /> Run payload
                 </Button>
-                <Button variant="outline" size="sm" onClick={handleRunAll} loading={runningAll}>
+                <Button variant="outline" size="sm" onClick={handleRunAllWithDelay} loading={runningAll}>
                   Run all with delay
                 </Button>
               </div>

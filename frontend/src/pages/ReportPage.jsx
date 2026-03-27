@@ -10,8 +10,9 @@ function formatDate(d) {
   return d ? new Date(d).toLocaleString() : '—';
 }
 
-function ResultRow({ result, index }) {
+function ResultRow({ result, isPrinting }) {
   const [expanded, setExpanded] = useState(false);
+  const showDetail = expanded || (isPrinting && !result.passed);
 
   return (
     <div className={styles.resultRow}>
@@ -30,7 +31,7 @@ function ResultRow({ result, index }) {
         </div>
       </div>
 
-      {expanded && (
+      {showDetail && (
         <div className={styles.resultDetail}>
           <div className={styles.detailGrid}>
             <div className={styles.detailPane}>
@@ -59,8 +60,22 @@ export default function ReportPage() {
   const navigate = useNavigate();
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isPrinting, setIsPrinting] = useState(false);
 
   useEffect(() => { fetchReport(); }, [id]);
+
+  useEffect(() => {
+    const handleBeforePrint = () => setIsPrinting(true);
+    const handleAfterPrint = () => setIsPrinting(false);
+
+    window.addEventListener('beforeprint', handleBeforePrint);
+    window.addEventListener('afterprint', handleAfterPrint);
+
+    return () => {
+      window.removeEventListener('beforeprint', handleBeforePrint);
+      window.removeEventListener('afterprint', handleAfterPrint);
+    };
+  }, []);
 
   const fetchReport = async () => {
     try {
@@ -74,7 +89,8 @@ export default function ReportPage() {
   };
 
   const handleDownloadPDF = () => {
-    window.print();
+    setIsPrinting(true);
+    window.requestAnimationFrame(() => window.print());
   };
 
   if (loading) return <div className={styles.center}><Spinner size={28} /></div>;
@@ -147,7 +163,7 @@ export default function ReportPage() {
 
           <div className={styles.resultsList}>
             {report.results.map((result, i) => (
-              <ResultRow key={i} result={result} index={i} />
+              <ResultRow key={i} result={result} isPrinting={isPrinting} />
             ))}
           </div>
         </div>

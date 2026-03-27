@@ -74,9 +74,6 @@ function StatCard({ label, value, sub, subColor, valueColor }) {
    - Works whether user saves or cancels the dialog
 ───────────────────────────────────────────────────────────── */
 function downloadReportPDF(report) {
-  const win = window.open('', '_blank');
-  if (!win) { toast.error('Popup blocked - allow popups and retry'); return; }
-
   const rowAvg = rowAvgLatency(report);
   const safeConfigName = escapeHtml(report.configName);
   const safeMethod = escapeHtml(report.method);
@@ -120,7 +117,7 @@ function downloadReportPDF(report) {
   `;
   }).join('');
 
-  win.document.write(`<!DOCTYPE html>
+  const printHtml = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8"/>
@@ -159,17 +156,48 @@ function downloadReportPDF(report) {
     </thead>
     <tbody>${resultRows}</tbody>
   </table>
-  <script>
-    window.onload = function () {
-      window.print();
-      window.addEventListener('afterprint', function () {
-        window.close();
-      });
-    };
-  <\/script>
 </body>
-</html>`);
-  win.document.close();
+</html>`;
+
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'fixed';
+  iframe.style.right = '0';
+  iframe.style.bottom = '0';
+  iframe.style.width = '0';
+  iframe.style.height = '0';
+  iframe.style.border = '0';
+  iframe.setAttribute('aria-hidden', 'true');
+  document.body.appendChild(iframe);
+
+  const printWindow = iframe.contentWindow;
+  if (!printWindow) {
+    iframe.remove();
+    toast.error('Unable to open print preview');
+    return;
+  }
+
+  const cleanup = () => {
+    if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
+  };
+
+  printWindow.document.open();
+  printWindow.document.write(printHtml);
+  printWindow.document.close();
+
+  const onAfterPrint = () => {
+    printWindow.removeEventListener('afterprint', onAfterPrint);
+    cleanup();
+  };
+
+  printWindow.addEventListener('afterprint', onAfterPrint);
+
+  // Fallback cleanup for browsers that don't reliably emit afterprint.
+  setTimeout(cleanup, 60000);
+
+  setTimeout(() => {
+    printWindow.focus();
+    printWindow.print();
+  }, 80);
 }
 
 /* ─────────────────────────────────────────────────────────────

@@ -18,7 +18,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 20px;
+  padding: 9px 20px;
   background: var(--bg-card);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
@@ -230,8 +230,21 @@
 }
 
 .payloadBtns {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 8px;
+  width: 100%;
+}
+
+.payloadBtns button {
+  width: 100%;
+  min-width: 0;
+  justify-content: center;
+  white-space: normal;
+  text-transform: none;
+  letter-spacing: 0.2px;
+  line-height: 1.2;
+  padding: 6px 8px;
 }
 
 /* ── Center panel ────────────────────────────────────────── */

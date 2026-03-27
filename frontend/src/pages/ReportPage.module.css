@@ -234,7 +234,45 @@
 
 /* Print styles */
 @media print {
+  .page {
+    min-height: auto;
+    background: #fff !important;
+  }
+
+  .topbar {
+    padding: 0 0 10px;
+    margin-bottom: 10px;
+    background: #fff;
+    border-bottom: 1px solid #d1d5db;
+  }
+
   .topbarRight { display: none; }
   .expandBtn   { display: none; }
+
+  .content {
+    max-width: none;
+    padding: 0;
+  }
+
+  .summaryBar,
+  .resultsSection {
+    box-shadow: none;
+  }
+
+  .passBadge {
+    background: var(--green-500) !important;
+    color: #fff !important;
+  }
+
+  .failBadge {
+    background: var(--red-500) !important;
+    color: #fff !important;
+  }
+
+  .resultRow {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
   .resultDetail { display: block !important; }
 }

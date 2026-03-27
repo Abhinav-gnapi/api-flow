@@ -199,3 +199,14 @@ button, input, select, textarea {
 
 /* React Flow override */
 .react-flow__attribution { display: none; }
+
+@media print {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  html, body, #root {
+    background: #fff !important;
+  }
+}

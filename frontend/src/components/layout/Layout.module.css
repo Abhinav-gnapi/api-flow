@@ -91,3 +91,21 @@
   overflow-y: auto;
   background: var(--bg-page);
 }
+
+@media print {
+  .shell {
+    display: block;
+    height: auto;
+    overflow: visible;
+    background: #fff;
+  }
+
+  .sidebar {
+    display: none !important;
+  }
+
+  .main {
+    overflow: visible !important;
+    background: #fff !important;
+  }
+}
