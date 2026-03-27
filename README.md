@@ -168,6 +168,35 @@ POST   /api/flows/:id/run     Execute flow
 
 ---
 
+## Docker
+
+### Build individual images
+
+From project root:
+
+```bash
+docker build -f backend/Dockerfile -t api-flow-tester-backend .
+docker build -f frontend/Dockerfile -t api-flow-tester-frontend ./frontend
+```
+
+### Run full stack with Docker Compose
+
+```bash
+docker compose up --build
+```
+
+Services:
+- Frontend: http://localhost:8080
+- Backend:  http://localhost:5000
+- MongoDB:  mongodb://localhost:27017
+
+Optional environment variables for backend can be passed from your shell before running compose:
+- `OPENAI_API_KEY`
+- `GITHUB_TOKEN`, `GITHUB_OWNER`, `GITHUB_REPO`
+- `JIRA_HOST`, `JIRA_EMAIL`, `JIRA_API_TOKEN`, `JIRA_PROJECT_KEY`
+
+---
+
 ## Color Scheme
 
 Matches the reference screenshots:

@@ -68,17 +68,16 @@ export const Typography = {
     textTransform: 'uppercase',
   },
   caption: {
-    fontSize: '0.75rem',
+    fontSize: '0.875rem',
     fontWeight: 400,
-    lineHeight: '16px',
-    letterSpacing: '0.4px',
+    lineHeight: '20px',
+    letterSpacing: '0.25px',
   },
   overline: {
-    fontSize: '0.625rem',
+    fontSize: '0.875rem',
     fontWeight: 400,
-    lineHeight: '15px',
-    letterSpacing: '1.5px',
+    lineHeight: '20px',
+    letterSpacing: '0.25px',
     textTransform: 'uppercase',
   },
 };
-

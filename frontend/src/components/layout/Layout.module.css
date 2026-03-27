@@ -35,10 +35,11 @@
 }
 
 .logoText {
-  font-size: 15px;
-  font-weight: 700;
+  font-size: var(--type-subtitle1-font-size);
+  font-weight: var(--type-subtitle1-font-weight);
+  line-height: var(--type-subtitle1-line-height);
+  letter-spacing: var(--type-subtitle1-letter-spacing);
   color: var(--text-primary);
-  letter-spacing: -0.02em;
 }
 
 .nav {
@@ -57,8 +58,10 @@
   border-radius: var(--radius-md);
   color: var(--text-secondary);
   text-decoration: none;
-  font-size: 13.5px;
-  font-weight: 500;
+  font-size: var(--type-subtitle2-font-size);
+  font-weight: var(--type-subtitle2-font-weight);
+  line-height: var(--type-subtitle2-line-height);
+  letter-spacing: var(--type-subtitle2-letter-spacing);
   transition: background 0.15s, color 0.15s;
 }
 
@@ -82,7 +85,10 @@
 }
 
 .version {
-  font-size: 11px;
+  font-size: var(--type-caption-font-size);
+  font-weight: var(--type-caption-font-weight);
+  line-height: var(--type-caption-line-height);
+  letter-spacing: var(--type-caption-letter-spacing);
   color: var(--text-muted);
 }
 

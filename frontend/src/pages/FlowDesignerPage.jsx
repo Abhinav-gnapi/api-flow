@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+﻿import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ReactFlow, {
   addEdge,
@@ -18,7 +18,594 @@ import toast from 'react-hot-toast';
 import { Plus, Play, Zap, ArrowLeft, Save, Trash2, X, ChevronRight, KeyRound } from 'lucide-react';
 import { flowsApi, aiApi } from '../services/api';
 import { Button, Spinner, Modal, Input, Select, EmptyState } from '../components/ui';
-import styles from './FlowDesignerPage.module.css';
+import { useInlinePageStyles } from '../theme/useInlinePageStyles';
+
+
+const styles = new Proxy({}, { get: (_, key) => String(key) });
+const FLOW_DESIGNER_PAGE_STYLES = String.raw`.page {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--bg-page);
+}
+
+.center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+}
+
+/* â”€â”€ Flow list sidebar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.flowList {
+  width: 200px;
+  flex-shrink: 0;
+  background: var(--bg-card);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.flowListHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16.5px 12px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.flowListTitle {
+  font-size: var(--type-subtitle2-font-size);
+  font-weight: 600;
+  line-height: var(--type-subtitle2-line-height);
+  letter-spacing: var(--type-subtitle2-letter-spacing);
+  color: var(--text-primary);
+}
+
+.addBtn {
+  display: flex; align-items: center; gap: 3px;
+  background: transparent; border: none;
+  color: var(--purple-600);
+  font-size: var(--type-caption-font-size);
+  font-weight: 600;
+  line-height: var(--type-caption-line-height);
+  letter-spacing: var(--type-caption-letter-spacing);
+  cursor: pointer; padding: 3px 6px; border-radius: var(--radius-sm);
+}
+.addBtn:hover { background: var(--purple-50); }
+
+.emptyMsg {
+  font-size: var(--type-body2-font-size);
+  font-weight: var(--type-body2-font-weight);
+  line-height: var(--type-body2-line-height);
+  letter-spacing: var(--type-body2-letter-spacing);
+  color: var(--text-muted);
+  text-align: center; padding: 20px 12px;
+}
+
+.flowItem {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 9px 12px; cursor: pointer; gap: 6px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.12s;
+}
+.flowItem:hover { background: var(--bg-hover); }
+.flowItemActive { background: var(--bg-selected); }
+
+.flowItemName {
+  font-size: var(--type-subtitle2-font-size);
+  font-weight: var(--type-subtitle2-font-weight);
+  line-height: var(--type-subtitle2-line-height);
+  letter-spacing: var(--type-subtitle2-letter-spacing);
+  color: var(--text-primary);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  flex: 1;
+}
+
+.removeBtn {
+  width: 22px; height: 22px; border: none; background: transparent;
+  color: var(--text-muted); cursor: pointer; border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.removeBtn:hover { background: #fee2e2; color: var(--red-500); }
+
+/* â”€â”€ Canvas wrap â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.canvasWrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+.toolbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14.5px 16px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  gap: 12px;
+}
+
+.toolbarLeft { display: flex; align-items: center; gap: 10px; }
+.toolbarRight { display: flex; align-items: center; gap: 8px; }
+
+.backBtn {
+  width: 30px; height: 30px; border: 1px solid var(--border);
+  background: transparent; border-radius: var(--radius-md);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--text-secondary);
+}
+.backBtn:hover { background: var(--bg-hover); }
+
+.flowTitle {
+  font-size: var(--type-subtitle1-font-size);
+  font-weight: 600;
+  line-height: var(--type-subtitle1-line-height);
+  letter-spacing: var(--type-subtitle1-letter-spacing);
+  color: var(--text-primary);
+}
+
+.emptyCanvas {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+}
+
+.flow { flex: 1; }
+
+/* â”€â”€ Custom node â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.stepNode {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 10px 14px;
+  min-width: 180px;
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.15s, box-shadow 0.15s;
+  position: relative;
+}
+
+/* delete âœ• button â€” top-right corner of node */
+.nodeDeleteBtn {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--red-500);
+  border: 2px solid #fff;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 10;
+  padding: 0;
+  line-height: 1;
+}
+.stepNode:hover .nodeDeleteBtn { opacity: 1; }
+.stepNodeSelected {
+  border-color: var(--purple-500);
+  box-shadow: 0 0 0 2px var(--purple-100);
+}
+
+.stepNodeHeader {
+  display: flex; align-items: center; gap: 7px;
+  margin-bottom: 4px;
+}
+
+.stepMethod {
+  font-size: var(--type-caption-font-size);
+  font-weight: 700;
+  line-height: var(--type-caption-line-height);
+  font-family: var(--font-mono);
+}
+.stepName {
+  font-size: var(--type-subtitle2-font-size);
+  font-weight: 600;
+  line-height: var(--type-subtitle2-line-height);
+  letter-spacing: var(--type-subtitle2-letter-spacing);
+  color: var(--text-primary);
+}
+
+.stepUrl {
+  font-size: var(--type-caption-font-size);
+  line-height: var(--type-caption-line-height);
+  letter-spacing: var(--type-caption-letter-spacing);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  max-width: 200px;
+}
+
+.stepResult {
+  margin-top: 6px;
+  font-size: var(--type-caption-font-size);
+  font-weight: 600;
+  line-height: var(--type-caption-line-height);
+  letter-spacing: var(--type-caption-letter-spacing);
+  padding: 2px 8px; border-radius: var(--radius-full);
+  display: inline-block; font-family: var(--font-mono);
+}
+.stepPass { background: #dcfce7; color: #15803d; }
+.stepFail { background: #fee2e2; color: #b91c1c; }
+
+/* Auth header display inside node */
+.stepAuthRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 4px 7px;
+  background: var(--purple-50);
+  border: 1px solid var(--purple-100);
+  border-radius: var(--radius-sm);
+}
+.stepAuthKey {
+  font-size: var(--type-overline-font-size);
+  font-weight: 700;
+  line-height: var(--type-overline-line-height);
+  letter-spacing: var(--type-overline-letter-spacing);
+  text-transform: var(--type-overline-text-transform);
+  color: var(--purple-600);
+  font-family: var(--font-mono);
+  flex-shrink: 0;
+}
+.stepAuthVal {
+  font-size: var(--type-caption-font-size);
+  line-height: var(--type-caption-line-height);
+  letter-spacing: var(--type-caption-letter-spacing);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Variable badges inside node */
+.stepVarRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+.stepVarExtract {
+  font-size: var(--type-caption-font-size);
+  font-weight: 600;
+  line-height: var(--type-caption-line-height);
+  letter-spacing: var(--type-caption-letter-spacing);
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+  background: #dcfce7;
+  color: #15803d;
+  font-family: var(--font-mono);
+}
+.stepVarInject {
+  font-size: var(--type-caption-font-size);
+  font-weight: 600;
+  line-height: var(--type-caption-line-height);
+  letter-spacing: var(--type-caption-letter-spacing);
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+  background: var(--purple-100);
+  color: var(--purple-700);
+  font-family: var(--font-mono);
+}
+
+.handle {
+  width: 10px !important; height: 10px !important;
+  background: var(--purple-500) !important;
+  border: 2px solid #fff !important;
+}
+
+/* â”€â”€ Result panel â€” top-right overlay â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.resultPanel {
+  position: absolute;
+  top: 60px; right: 12px;
+  width: 260px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  z-index: 10;
+}
+
+/* â”€â”€ AI Analysis panel â€” bottom drawer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.aiPanel {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  max-height: 260px;
+  background: var(--bg-card);
+  border-top: 2px solid var(--border);
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+  overflow-y: auto;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.2s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(30px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.resultPanelHeader {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px 10px; border-bottom: 1px solid var(--border);
+}
+.resultPanelTitle {
+  font-size: var(--type-subtitle2-font-size);
+  font-weight: 600;
+  line-height: var(--type-subtitle2-line-height);
+  letter-spacing: var(--type-subtitle2-letter-spacing);
+  color: var(--text-primary);
+}
+
+.resultSummary {
+  display: flex; gap: 10px; padding: 8px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.resultStat {
+  font-size: var(--type-body2-font-size);
+  font-weight: 600;
+  line-height: var(--type-body2-line-height);
+  letter-spacing: var(--type-body2-letter-spacing);
+  color: var(--text-secondary);
+}
+.resultPass { color: var(--green-600); }
+.resultFail { color: var(--red-600); }
+
+.stepResults { padding: 6px 0; }
+.stepResultRow {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 14px;
+}
+.stepArrow { color: var(--text-muted); flex-shrink: 0; }
+.stepResultName {
+  font-size: var(--type-body2-font-size);
+  line-height: var(--type-body2-line-height);
+  letter-spacing: var(--type-body2-letter-spacing);
+  flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.stepStatus {
+  font-size: var(--type-caption-font-size);
+  font-weight: 700;
+  line-height: var(--type-caption-line-height);
+  letter-spacing: var(--type-caption-letter-spacing);
+  font-family: var(--font-mono);
+}
+.stepLatency {
+  font-size: var(--type-caption-font-size);
+  line-height: var(--type-caption-line-height);
+  letter-spacing: var(--type-caption-letter-spacing);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+/* â”€â”€ AI panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.aiDrawerBody {
+  display: flex;
+  flex-direction: row;
+  gap: 0;
+  flex: 1;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.aiDrawerCol {
+  min-width: 260px;
+  max-width: 340px;
+  flex: 1;
+  padding: 10px 14px;
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+}
+.aiDrawerCol:last-child { border-right: none; }
+
+.aiItemList { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+
+.aiSection { padding: 10px 14px; border-bottom: 1px solid var(--border); }
+.aiSectionTitle {
+  font-size: var(--type-overline-font-size);
+  font-weight: 700;
+  line-height: var(--type-overline-line-height);
+  letter-spacing: var(--type-overline-letter-spacing);
+  text-transform: var(--type-overline-text-transform);
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.aiItem { padding: 8px 10px; border-radius: var(--radius-md); margin-bottom: 6px; }
+.aiHigh   { background: #fff1f1; border-left: 3px solid var(--red-500); }
+.aiMedium { background: #fffbeb; border-left: 3px solid var(--yellow-500); }
+.aiLow    { background: var(--bg-code); border-left: 3px solid var(--border); }
+.aiItemTitle {
+  font-size: var(--type-body2-font-size);
+  font-weight: 600;
+  line-height: var(--type-body2-line-height);
+  letter-spacing: var(--type-body2-letter-spacing);
+  color: var(--text-primary);
+}
+.aiItemDesc {
+  font-size: var(--type-caption-font-size);
+  font-weight: var(--type-caption-font-weight);
+  line-height: var(--type-caption-line-height);
+  letter-spacing: var(--type-caption-letter-spacing);
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+/* â”€â”€ Step editor sidebar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.stepEditor {
+  width: 280px;
+  flex-shrink: 0;
+  background: var(--bg-card);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.stepEditorHeader {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 13px 14px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.stepEditorTitle {
+  font-size: var(--type-subtitle2-font-size);
+  font-weight: 600;
+  line-height: var(--type-subtitle2-line-height);
+  letter-spacing: var(--type-subtitle2-letter-spacing);
+  color: var(--text-primary);
+}
+
+.stepEditorBody {
+  flex: 1; overflow-y: auto; padding: 14px 14px 20px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+
+.editorField { display: flex; flex-direction: column; gap: 4px; }
+.editorLabel {
+  font-size: var(--type-caption-font-size);
+  font-weight: var(--type-subtitle2-font-weight);
+  line-height: var(--type-caption-line-height);
+  letter-spacing: var(--type-caption-letter-spacing);
+  color: var(--text-secondary);
+}
+
+.editorRow { display: flex; gap: 8px; align-items: flex-end; }
+
+.editorInput {
+  padding: 7px 10px;
+  border: 1px solid var(--border); border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: var(--type-body2-font-size);
+  font-weight: var(--type-body2-font-weight);
+  line-height: var(--type-body2-line-height);
+  letter-spacing: var(--type-body2-letter-spacing);
+  background: var(--bg-input); color: var(--text-primary); width: 100%;
+}
+.editorInput:focus { outline: none; border-color: var(--border-focus); }
+
+.editorSelect {
+  padding: 7px 10px; border: 1px solid var(--border);
+  border-radius: var(--radius-md); font-family: var(--font-sans);
+  font-size: var(--type-body2-font-size);
+  font-weight: var(--type-body2-font-weight);
+  line-height: var(--type-body2-line-height);
+  letter-spacing: var(--type-body2-letter-spacing);
+  background: var(--bg-input); width: 100%;
+}
+.editorSelect:focus { outline: none; border-color: var(--border-focus); }
+
+.editorTextarea {
+  padding: 7px 10px;
+  border: 1px solid var(--border); border-radius: var(--radius-md);
+  font-family: var(--font-mono);
+  font-size: var(--type-caption-font-size);
+  font-weight: var(--type-caption-font-weight);
+  letter-spacing: var(--type-caption-letter-spacing);
+  resize: vertical;
+  background: var(--bg-code); color: var(--text-primary); width: 100%;
+  line-height: 1.5;
+}
+.editorTextarea:focus { outline: none; border-color: var(--border-focus); }
+
+/* â”€â”€ New flow modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.newFlowForm { display: flex; flex-direction: column; gap: 14px; }
+.modalActions { display: flex; justify-content: flex-end; gap: 8px; }
+
+/* Delete flow confirmation snackbar */
+.deleteFlowToast {
+  min-width: 320px;
+  max-width: min(92vw, 420px);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: 12px 14px;
+}
+
+.deleteFlowToastIn {
+  animation: deleteFlowToastIn 0.18s ease-out;
+}
+
+.deleteFlowToastOut {
+  animation: deleteFlowToastOut 0.16s ease-in forwards;
+}
+
+.deleteFlowToastTitle {
+  font-size: var(--type-subtitle2-font-size);
+  font-weight: 700;
+  line-height: var(--type-subtitle2-line-height);
+  letter-spacing: var(--type-subtitle2-letter-spacing);
+  color: var(--text-primary);
+}
+
+.deleteFlowToastText {
+  font-size: var(--type-body2-font-size);
+  font-weight: var(--type-body2-font-weight);
+  line-height: var(--type-body2-line-height);
+  letter-spacing: var(--type-body2-letter-spacing);
+  color: var(--text-secondary);
+  margin-top: 4px;
+  word-break: break-word;
+}
+
+.deleteFlowToastActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.deleteFlowToastBtn {
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font-size: var(--type-button-font-size);
+  font-weight: var(--type-button-font-weight);
+  line-height: var(--type-button-line-height);
+  letter-spacing: var(--type-button-letter-spacing);
+  text-transform: var(--type-button-text-transform);
+  padding: 5px 12px;
+  cursor: pointer;
+}
+
+.deleteFlowToastBtnCancel {
+  border-color: var(--border);
+  color: var(--text-secondary);
+  background: transparent;
+}
+
+.deleteFlowToastBtnCancel:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.deleteFlowToastBtnDelete {
+  border-color: var(--red-500);
+  color: #fff;
+  background: var(--red-500);
+}
+
+.deleteFlowToastBtnDelete:hover {
+  background: var(--red-600);
+}
+
+@keyframes deleteFlowToastIn {
+  from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes deleteFlowToastOut {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(-6px) scale(0.98); }
+}
+`;
 
 const METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
 const METHOD_COLORS = {
@@ -62,7 +649,7 @@ function normalizeAuthTemplate(rawValue) {
   return '';
 }
 
-/* ── Custom node ─────────────────────────────────────────── */
+/* â”€â”€ Custom node â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 function StepNode({ id, data, selected }) {
   // Prefer step-level Authorization, otherwise fall back to flow-level Authorization.
   const stepAuthHeader = data.headers?.Authorization || data.headers?.authorization
@@ -101,14 +688,14 @@ function StepNode({ id, data, selected }) {
       </div>
 
       {/* URL */}
-      <div className={styles.stepUrl}>{data.url || '—'}</div>
+      <div className={styles.stepUrl}>{data.url || 'â€”'}</div>
 
       {/* Auth header display */}
       {authHeader && (
         <div className={styles.stepAuthRow}>
           <span className={styles.stepAuthKey}>Authorization{authIsFlowLevel ? ' (flow)' : ''}</span>
           <span className={styles.stepAuthVal}>
-            {authHeader.length > 28 ? authHeader.slice(0, 28) + '…' : authHeader}
+            {authHeader.length > 28 ? authHeader.slice(0, 28) + 'â€¦' : authHeader}
           </span>
         </div>
       )}
@@ -118,12 +705,12 @@ function StepNode({ id, data, selected }) {
         <div className={styles.stepVarRow}>
           {extractKeys.map(k => (
             <span key={k} className={styles.stepVarExtract} title={`Extracts: ${k}`}>
-              ↑ {k}
+              â†‘ {k}
             </span>
           ))}
           {injectKeys.map(k => (
             <span key={k} className={styles.stepVarInject} title={`Injects: ${k}`}>
-              ↓ {k}
+              â†“ {k}
             </span>
           ))}
         </div>
@@ -132,7 +719,7 @@ function StepNode({ id, data, selected }) {
       {/* Run result */}
       {data.result && (
         <div className={`${styles.stepResult} ${data.result.passed ? styles.stepPass : styles.stepFail}`}>
-          {data.result.statusCode} · {data.result.latencyMs}ms
+          {data.result.statusCode} Â· {data.result.latencyMs}ms
         </div>
       )}
 
@@ -146,6 +733,7 @@ const nodeTypes = { step: StepNode };
 let stepIdCounter = 1;
 
 function FlowDesignerInner() {
+  useInlinePageStyles('flow-designer-page-inline-styles', FLOW_DESIGNER_PAGE_STYLES);
   const { id } = useParams();
   const navigate = useNavigate();
   const { getViewport, project } = useReactFlow();
@@ -197,7 +785,7 @@ function FlowDesignerInner() {
     }
   };
 
-  /* delete a node (and its connected edges) — defined BEFORE loadFlow/makeNodeData */
+  /* delete a node (and its connected edges) â€” defined BEFORE loadFlow/makeNodeData */
   const handleDeleteNode = useCallback((nodeId) => {
     setNodes((nds) => nds.filter((n) => n.id !== nodeId));
     setEdges((eds) => eds.filter((e) => e.source !== nodeId && e.target !== nodeId));
@@ -249,7 +837,12 @@ function FlowDesignerInner() {
           target: s.nextStepId,
           animated: true,
           label,
-          labelStyle: { fontSize: 10, fontFamily: 'monospace', fill: '#7c3aed', fontWeight: 600 },
+          labelStyle: {
+            fontSize: 10,
+            fontFamily: 'var(--font-mono)',
+            fill: '#7c3aed',
+            fontWeight: 600,
+          },
           labelBgStyle: { fill: '#f5f3ff', fillOpacity: 0.95 },
           labelBgPadding: [4, 6],
           labelBgBorderRadius: 4,
@@ -633,7 +1226,7 @@ function FlowDesignerInner() {
           </div>
         )} */}
 
-        {/* AI Analysis panel — bottom drawer */}
+        {/* AI Analysis panel â€” bottom drawer */}
         {aiAnalysis && (
           <div className={styles.aiPanel}>
             {/* drawer header */}
@@ -641,12 +1234,27 @@ function FlowDesignerInner() {
               <span className={styles.resultPanelTitle}>AI Analysis</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 {aiAnalysis.negativeFlows?.length > 0 && (
-                  <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                  <span
+                    style={{
+                      fontSize: 'var(--type-overline-font-size)',
+                      lineHeight: 'var(--type-overline-line-height)',
+                      letterSpacing: 'var(--type-overline-letter-spacing)',
+                      color: 'var(--text-muted)',
+                    }}
+                  >
                     {aiAnalysis.negativeFlows.length} negative flow{aiAnalysis.negativeFlows.length !== 1 ? 's' : ''}
                   </span>
                 )}
                 {aiAnalysis.securityConcerns?.length > 0 && (
-                  <span style={{ fontSize: 11, color: 'var(--red-500)', fontWeight: 600 }}>
+                  <span
+                    style={{
+                      fontSize: 'var(--type-overline-font-size)',
+                      lineHeight: 'var(--type-overline-line-height)',
+                      letterSpacing: 'var(--type-overline-letter-spacing)',
+                      color: 'var(--red-500)',
+                      fontWeight: 600,
+                    }}
+                  >
                     {aiAnalysis.securityConcerns.length} security concern{aiAnalysis.securityConcerns.length !== 1 ? 's' : ''}
                   </span>
                 )}
@@ -676,7 +1284,7 @@ function FlowDesignerInner() {
                     {aiAnalysis.securityConcerns.map((sc, i) => (
                       <div key={i} className={`${styles.aiItem} ${styles.aiHigh}`}>
                         <p className={styles.aiItemTitle}>{sc.concern}</p>
-                        <p className={styles.aiItemDesc}>Step: {sc.step} · Severity: {sc.severity}</p>
+                        <p className={styles.aiItemDesc}>Step: {sc.step} Â· Severity: {sc.severity}</p>
                       </div>
                     ))}
                   </div>
@@ -755,7 +1363,15 @@ function FlowDesignerInner() {
             value={flowAuthDraft}
             onChange={(e) => setFlowAuthDraft(e.target.value)}
           />
-          <p style={{ marginTop: 8, fontSize: 12, color: 'var(--text-muted)' }}>
+          <p
+            style={{
+              marginTop: 8,
+              fontSize: 'var(--type-caption-font-size)',
+              lineHeight: 'var(--type-caption-line-height)',
+              letterSpacing: 'var(--type-caption-letter-spacing)',
+              color: 'var(--text-muted)',
+            }}
+          >
             Tip: extract the token in your login step (e.g. <code>{'"token": "$.data.token"'}</code>) and
             use <code>{'{{token}}'}</code> here.
           </p>
@@ -804,7 +1420,7 @@ function FlowDesignerInner() {
   );
 }
 
-/* ── Wrap with ReactFlowProvider so useReactFlow() works ──── */
+/* â”€â”€ Wrap with ReactFlowProvider so useReactFlow() works â”€â”€â”€â”€ */
 export default function FlowDesignerPage() {
   return (
     <ReactFlowProvider>
@@ -812,3 +1428,4 @@ export default function FlowDesignerPage() {
     </ReactFlowProvider>
   );
 }
+

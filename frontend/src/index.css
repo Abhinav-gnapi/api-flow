@@ -7,39 +7,39 @@
 }
 
 :root {
-  /* Colors extracted from screenshots */
-  --bg-page:        #f0f2f5;
+  /* Core surface colors (aligned with main project theme) */
+  --bg-page:        #F4F6F9;
   --bg-card:        #ffffff;
   --bg-input:       #ffffff;
   --bg-sidebar:     #ffffff;
-  --bg-hover:       #f8f8fb;
-  --bg-code:        #f6f7f9;
-  --bg-selected:    #f3f0ff;
+  --bg-hover:       #F8F9FC;
+  --bg-code:        #F7F8FB;
+  --bg-selected:    #F9F2FC;
 
-  --border:         #e5e7eb;
-  --border-focus:   #8b5cf6;
+  --border:         #ACB1C6;
+  --border-focus:   #9C27B0;
 
-  --purple-50:      #f5f3ff;
-  --purple-100:     #ede9fe;
-  --purple-500:     #8b5cf6;
-  --purple-600:     #7c3aed;
-  --purple-700:     #6d28d9;
+  --purple-50:      #F9D5FF;
+  --purple-100:     #F2B8FF;
+  --purple-500:     #9C27B0;
+  --purple-600:     #9C27B0;
+  --purple-700:     #7B1FA2;
 
-  --green-500:      #22c55e;
-  --green-600:      #16a34a;
-  --red-500:        #ef4444;
-  --red-600:        #dc2626;
-  --yellow-500:     #f59e0b;
-  --blue-500:       #3b82f6;
+  --green-500:      #4CAF50;
+  --green-600:      #2E7D32;
+  --red-500:        #F44336;
+  --red-600:        #D32F2F;
+  --yellow-500:     #EF6C00;
+  --blue-500:       #2682DD;
 
-  --text-primary:   #111827;
-  --text-secondary: #6b7280;
-  --text-muted:     #9ca3af;
-  --text-purple:    #7c3aed;
+  --text-primary:   #45474C;
+  --text-secondary: #5F667A;
+  --text-muted:     #8A91A6;
+  --text-purple:    #9C27B0;
 
   --shadow-sm:      0 1px 2px rgba(0,0,0,0.05);
-  --shadow-md:      0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -1px rgba(0,0,0,0.04);
-  --shadow-lg:      0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -2px rgba(0,0,0,0.03);
+  --shadow-md:      0 4px 12px rgba(0,0,0,0.08);
+  --shadow-lg:      0 10px 24px rgba(0,0,0,0.12);
 
   --radius-sm:      4px;
   --radius-md:      8px;
@@ -107,19 +107,24 @@
   --type-button-letter-spacing: 0.75px;
   --type-button-text-transform: uppercase;
 
-  --type-caption-font-size: 0.75rem;
+  --type-caption-font-size: 0.875rem;
   --type-caption-font-weight: 400;
-  --type-caption-line-height: 16px;
-  --type-caption-letter-spacing: 0.4px;
+  --type-caption-line-height: 20px;
+  --type-caption-letter-spacing: 0.25px;
 
-  --type-overline-font-size: 0.625rem;
+  --type-overline-font-size: 0.875rem;
   --type-overline-font-weight: 400;
-  --type-overline-line-height: 15px;
-  --type-overline-letter-spacing: 1.5px;
+  --type-overline-line-height: 20px;
+  --type-overline-letter-spacing: 0.25px;
   --type-overline-text-transform: uppercase;
 }
 
-html, body, #root {
+html {
+  height: 100%;
+  font-size: 16px;
+}
+
+body, #root {
   height: 100%;
   font-family: var(--font-sans);
   background: var(--bg-page);
@@ -154,8 +159,8 @@ button, input, select, textarea {
 }
 
 .font-mono { font-family: var(--font-mono); }
-.text-sm   { font-size: 12px; }
-.text-xs   { font-size: 11px; }
+.text-sm   { font-size: var(--type-body2-font-size); }
+.text-xs   { font-size: var(--type-body2-font-size); }
 
 .typo-h1,
 .typo-h2,

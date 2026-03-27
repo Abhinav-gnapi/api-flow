@@ -1,13 +1,321 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { ArrowLeft, Download, ChevronDown, ChevronUp } from 'lucide-react';
 import { reportsApi } from '../services/api';
 import { Button, StatusBadge, Spinner } from '../components/ui';
-import styles from './ReportPage.module.css';
+import { useInlinePageStyles } from '../theme/useInlinePageStyles';
+
+const styles = new Proxy({}, { get: (_, key) => String(key) });
+const REPORT_PAGE_STYLES = String.raw`.page {
+  min-height: 100vh;
+  background: var(--bg-page);
+  display: flex;
+  flex-direction: column;
+}
+
+.center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 28px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+}
+
+.topbarLeft { display: flex; align-items: center; gap: 12px; }
+.topbarRight { display: flex; gap: 8px; }
+
+.title {
+  font-size: var(--type-h6-font-size);
+  font-weight: var(--type-h6-font-weight);
+  line-height: var(--type-h6-line-height);
+  letter-spacing: var(--type-h6-letter-spacing);
+  color: var(--text-primary);
+}
+
+.subtitle {
+  font-size: var(--type-body2-font-size);
+  font-weight: var(--type-body2-font-weight);
+  line-height: var(--type-body2-line-height);
+  letter-spacing: var(--type-body2-letter-spacing);
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.content {
+  padding: 24px 28px;
+  max-width: 1100px;
+  width: 100%;
+}
+
+/* â”€â”€ Summary bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.summaryBar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  margin-bottom: 16px;
+}
+
+.summaryItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.summaryLabel {
+  font-size: var(--type-body2-font-size);
+  font-weight: var(--type-body2-font-weight);
+  line-height: var(--type-body2-line-height);
+  letter-spacing: var(--type-body2-letter-spacing);
+  color: var(--text-secondary);
+}
+
+.summaryValue {
+  font-size: var(--type-subtitle2-font-size);
+  font-weight: var(--type-subtitle2-font-weight);
+  line-height: var(--type-subtitle2-line-height);
+  letter-spacing: var(--type-subtitle2-letter-spacing);
+  color: var(--text-primary);
+}
+
+.summaryDivider {
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+}
+
+.summaryBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 14px;
+  border-radius: var(--radius-full);
+  font-size: var(--type-subtitle2-font-size);
+  font-weight: var(--type-subtitle2-font-weight);
+  line-height: var(--type-subtitle2-line-height);
+  letter-spacing: var(--type-subtitle2-letter-spacing);
+}
+
+.passBadge { background: var(--green-500); color: #fff; }
+.failBadge { background: var(--red-500);   color: #fff; }
+
+/* â”€â”€ Progress â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.progressSection {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.progressBar {
+  flex: 1;
+  height: 6px;
+  background: var(--border);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: var(--green-500);
+  border-radius: var(--radius-full);
+  transition: width 0.5s ease;
+}
+
+.progressLabel {
+  font-size: var(--type-caption-font-size);
+  font-weight: var(--type-subtitle2-font-weight);
+  line-height: var(--type-caption-line-height);
+  letter-spacing: var(--type-caption-letter-spacing);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* â”€â”€ Results section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.resultsSection {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+}
+
+.resultsHeader {
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.resultsTitle {
+  font-size: var(--type-subtitle1-font-size);
+  font-weight: var(--type-subtitle1-font-weight);
+  line-height: var(--type-subtitle1-line-height);
+  letter-spacing: var(--type-subtitle1-letter-spacing);
+  color: var(--text-primary);
+}
+
+.resultsSubtitle {
+  font-size: var(--type-caption-font-size);
+  font-weight: var(--type-caption-font-weight);
+  line-height: var(--type-caption-line-height);
+  letter-spacing: var(--type-caption-letter-spacing);
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.resultsList { }
+
+/* â”€â”€ Result row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.resultRow {
+  border-bottom: 1px solid var(--border);
+}
+.resultRow:last-child { border-bottom: none; }
+
+.resultRowMain {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.resultRowMain:hover { background: var(--bg-hover); }
+
+.resultLeft { display: flex; flex-direction: column; gap: 2px; }
+
+.resultName {
+  font-size: var(--type-body2-font-size);
+  font-weight: var(--type-subtitle2-font-weight);
+  line-height: var(--type-body2-line-height);
+  letter-spacing: var(--type-body2-letter-spacing);
+  color: var(--text-primary);
+}
+
+.resultMeta {
+  font-size: var(--type-caption-font-size);
+  font-weight: var(--type-caption-font-weight);
+  line-height: var(--type-caption-line-height);
+  letter-spacing: var(--type-caption-letter-spacing);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.resultRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.expandBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+}
+
+/* â”€â”€ Expanded detail â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.resultDetail {
+  padding: 0 20px 16px;
+  background: var(--bg-code);
+  border-top: 1px solid var(--border);
+}
+
+.detailGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding-top: 12px;
+}
+
+.detailPane { display: flex; flex-direction: column; gap: 6px; }
+
+.detailLabel {
+  font-size: var(--type-overline-font-size);
+  font-weight: var(--type-overline-font-weight);
+  line-height: var(--type-overline-line-height);
+  letter-spacing: var(--type-overline-letter-spacing);
+  color: var(--text-muted);
+  text-transform: var(--type-overline-text-transform);
+}
+
+.jsonBlock {
+  font-family: var(--font-mono);
+  font-size: var(--type-caption-font-size);
+  font-weight: var(--type-caption-font-weight);
+  line-height: 1.6;
+  letter-spacing: var(--type-caption-letter-spacing);
+  color: var(--text-primary);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+/* Print styles */
+@media print {
+  .page {
+    min-height: auto;
+    background: #fff !important;
+  }
+
+  .topbar {
+    padding: 0 0 10px;
+    margin-bottom: 10px;
+    background: #fff;
+    border-bottom: 1px solid #d1d5db;
+  }
+
+  .topbarRight { display: none; }
+  .expandBtn   { display: none; }
+
+  .content {
+    max-width: none;
+    padding: 0;
+  }
+
+  .summaryBar,
+  .resultsSection {
+    box-shadow: none;
+  }
+
+  .passBadge {
+    background: var(--green-500) !important;
+    color: #fff !important;
+  }
+
+  .failBadge {
+    background: var(--red-500) !important;
+    color: #fff !important;
+  }
+
+  .resultRow {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .resultDetail { display: block !important; }
+}
+`;
 
 function formatDate(d) {
-  return d ? new Date(d).toLocaleString() : '—';
+  return d ? new Date(d).toLocaleString() : 'â€”';
 }
 
 function ResultRow({ result, isPrinting }) {
@@ -20,7 +328,7 @@ function ResultRow({ result, isPrinting }) {
         <div className={styles.resultLeft}>
           <span className={styles.resultName}>{result.payloadName}</span>
           <span className={styles.resultMeta}>
-            HTTP {result.statusCode} {result.statusText} · {result.latencyMs}ms
+            HTTP {result.statusCode} {result.statusText} Â· {result.latencyMs}ms
           </span>
         </div>
         <div className={styles.resultRight}>
@@ -56,6 +364,7 @@ function ResultRow({ result, isPrinting }) {
 }
 
 export default function ReportPage() {
+  useInlinePageStyles('report-page-inline-styles', REPORT_PAGE_STYLES);
   const { id } = useParams();
   const navigate = useNavigate();
   const [report, setReport] = useState(null);
@@ -106,7 +415,7 @@ export default function ReportPage() {
       <div className={styles.topbar}>
         <div className={styles.topbarLeft}>
           <div className={styles.titleBlock}>
-            <h1 className={styles.title}>Report · {report.configName}</h1>
+            <h1 className={styles.title}>Report Â· {report.configName}</h1>
             <p className={styles.subtitle}>Last run: {formatDate(report.runAt)}</p>
           </div>
         </div>
@@ -171,3 +480,5 @@ export default function ReportPage() {
     </div>
   );
 }
+
+

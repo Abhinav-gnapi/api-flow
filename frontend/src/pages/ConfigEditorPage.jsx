@@ -1,16 +1,24 @@
-import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { Plus, X, Play, Zap, Save, ArrowLeft, BarChart2 } from 'lucide-react';
 import CodeMirror from '@uiw/react-codemirror';
 import { json } from '@codemirror/lang-json';
+import {
+  Box,
+  Button,
+  Chip,
+  CircularProgress,
+  IconButton,
+  MenuItem,
+  Stack,
+  TextField,
+  Typography,
+  useTheme,
+} from '@mui/material';
 import { configsApi, payloadsApi, runnerApi, aiApi } from '../services/api';
-import { Button, Select, StatusBadge, Spinner, EmptyState } from '../components/ui';
-import styles from './ConfigEditorPage.module.css';
 
 const METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
-
-const cmTheme = { '&': { fontFamily: 'var(--font-mono)', fontSize: '12px' } };
 const cmExtensions = [json()];
 
 function safeJson(val) {
@@ -21,45 +29,81 @@ function safeJson(val) {
 
 function parseJson(str) {
   if (!str || !str.trim()) return {};
-  try { return JSON.parse(str); }
-  catch { return null; }
+  try {
+    return JSON.parse(str);
+  } catch {
+    return null;
+  }
 }
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function CodeEditor({ value, onChange, height = '120px', editable = true, placeholder }) {
+  const theme = useTheme();
+  const editorBorder = theme.overview?.borderBox || theme.palette.divider;
+
+  return (
+    <Box
+      sx={{
+        border: `1px solid ${editorBorder}`,
+        borderRadius: 1.5,
+        overflow: 'hidden',
+        '& .cm-editor': {
+          fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+          fontSize: 'var(--type-caption-font-size)',
+          backgroundColor: theme.palette.background.default,
+        },
+        '& .cm-focused': { outline: 'none' },
+      }}
+    >
+      <CodeMirror
+        value={value}
+        height={height}
+        extensions={cmExtensions}
+        theme="light"
+        editable={editable}
+        placeholder={placeholder}
+        onChange={onChange}
+      />
+    </Box>
+  );
+}
+
 export default function ConfigEditorPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const theme = useTheme();
+  const borderColor = theme.overview?.borderBox || theme.palette.divider;
+  const passBg = theme.chip?.approvalStatus?.approved || theme.palette.success.main;
+  const failBg = theme.chip?.approvalStatus?.rejected || theme.palette.error.main;
 
-  const [config, setConfig]               = useState(null);
-  const [payloads, setPayloads]           = useState([]);
-  const [selectedPayload, setSelected]    = useState(null);
-  const [loading, setLoading]             = useState(true);
-  const [running, setRunning]             = useState(false);
-  const [runningAll, setRunningAll]       = useState(false);
-  const [savingConfig, setSavingConfig]   = useState(false);
-  const [generatingAI, setGeneratingAI]  = useState(false);
+  const [config, setConfig] = useState(null);
+  const [payloads, setPayloads] = useState([]);
+  const [selectedPayload, setSelected] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [running, setRunning] = useState(false);
+  const [runningAll, setRunningAll] = useState(false);
+  const [savingConfig, setSavingConfig] = useState(false);
+  const [generatingAI, setGeneratingAI] = useState(false);
 
-  // Config form state
-  const [method, setMethod]         = useState('POST');
-  const [url, setUrl]               = useState('');
+  const [method, setMethod] = useState('POST');
+  const [url, setUrl] = useState('');
   const [headersStr, setHeadersStr] = useState('{}');
-  const [queryStr, setQueryStr]     = useState('{}');
+  const [queryStr, setQueryStr] = useState('{}');
 
-  // Payload editor state
-  const [payloadName, setPayloadName]   = useState('');
-  const [payloadBody, setPayloadBody]   = useState('{}');
+  const [payloadName, setPayloadName] = useState('');
+  const [payloadBody, setPayloadBody] = useState('{}');
 
-  // AI generator state
-  const [dtoStr, setDtoStr]   = useState('');
-  const [aiCount, setAiCount] = useState(10);
+  const [dtoStr, setDtoStr] = useState('');
+  const [aiCount] = useState(10);
 
-  // Response panel
   const [lastResponse, setLastResponse] = useState(null);
 
-  useEffect(() => { fetchAll(); }, [id]);
+  useEffect(() => {
+    fetchAll();
+  }, [id]);
 
   const fetchAll = async () => {
     try {
@@ -94,11 +138,11 @@ export default function ConfigEditorPage() {
   };
 
   const handleSaveConfig = async () => {
-    const headers   = parseJson(headersStr);
+    const headers = parseJson(headersStr);
     const queryParams = parseJson(queryStr);
-    if (headers === null)      return toast.error('Headers: invalid JSON');
-    if (queryParams === null)  return toast.error('Query Params: invalid JSON');
-    if (!url.trim())           return toast.error('URL is required');
+    if (headers === null) return toast.error('Headers: invalid JSON');
+    if (queryParams === null) return toast.error('Query Params: invalid JSON');
+    if (!url.trim()) return toast.error('URL is required');
 
     setSavingConfig(true);
     try {
@@ -114,7 +158,11 @@ export default function ConfigEditorPage() {
 
   const handleAddPayload = async () => {
     try {
-      const p = await payloadsApi.create({ configId: id, name: `Payload ${payloads.length + 1}`, body: {} });
+      const p = await payloadsApi.create({
+        configId: id,
+        name: `Payload ${payloads.length + 1}`,
+        body: {},
+      });
       const updated = [...payloads, p];
       setPayloads(updated);
       selectPayload(p);
@@ -145,7 +193,12 @@ export default function ConfigEditorPage() {
       setPayloads(updated);
       if (selectedPayload?._id === pid) {
         if (updated.length) selectPayload(updated[0]);
-        else { setSelected(null); setPayloadName(''); setPayloadBody('{}'); setLastResponse(null); }
+        else {
+          setSelected(null);
+          setPayloadName('');
+          setPayloadBody('{}');
+          setLastResponse(null);
+        }
       }
     } catch (e) {
       toast.error(e.message);
@@ -154,7 +207,6 @@ export default function ConfigEditorPage() {
 
   const handleRunOne = async () => {
     if (!selectedPayload) return toast.error('Select a payload first');
-    // Auto-save payload first
     const body = parseJson(payloadBody);
     if (body === null) return toast.error('Fix JSON before running');
     await payloadsApi.update(selectedPayload._id, { name: payloadName, body }).catch(() => {});
@@ -180,7 +232,6 @@ export default function ConfigEditorPage() {
     try {
       const { report, summary } = await runnerApi.runAll(id, 300);
       toast.success(`Done! ${summary.passed}/${summary.total} passed`);
-      // Refresh payloads to get updated lastResults
       const plds = await payloadsApi.getByConfig(id);
       setPayloads(plds);
       if (selectedPayload) {
@@ -203,7 +254,7 @@ export default function ConfigEditorPage() {
       let passed = 0;
       const runDelayMs = 300;
 
-      for (let i = 0; i < payloads.length; i++) {
+      for (let i = 0; i < payloads.length; i += 1) {
         const payload = payloads[i];
         const result = await runnerApi.runOne(id, payload._id);
         if (result.passed) passed += 1;
@@ -216,9 +267,7 @@ export default function ConfigEditorPage() {
           setLastResponse(result);
         }
 
-        if (i < payloads.length - 1) {
-          await sleep(runDelayMs);
-        }
+        if (i < payloads.length - 1) await sleep(runDelayMs);
       }
 
       toast.success(`Run complete: ${passed}/${payloads.length} passed`);
@@ -232,7 +281,7 @@ export default function ConfigEditorPage() {
   const handleGenerateAI = async () => {
     const dto = parseJson(dtoStr);
     if (!dtoStr.trim()) return toast.error('Enter a payload DTO first');
-    if (dto === null)   return toast.error('DTO: invalid JSON');
+    if (dto === null) return toast.error('DTO: invalid JSON');
 
     setGeneratingAI(true);
     try {
@@ -241,9 +290,7 @@ export default function ConfigEditorPage() {
       setPayloads(plds);
       if (plds.length) {
         const currentId = selectedPayload?._id;
-        const toSelect = currentId
-          ? plds.find((p) => p._id === currentId) || plds[0]
-          : plds[0];
+        const toSelect = currentId ? plds.find((p) => p._id === currentId) || plds[0] : plds[0];
         selectPayload(toSelect);
       } else {
         setSelected(null);
@@ -258,216 +305,419 @@ export default function ConfigEditorPage() {
     }
   };
 
-  if (loading) return <div className={styles.center}><Spinner size={28} /></div>;
-  if (!config)  return <div className={styles.center}><p>Config not found.</p></div>;
+  if (loading) {
+    return (
+      <Box
+        sx={{
+          height: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <CircularProgress size={28} />
+      </Box>
+    );
+  }
+
+  if (!config) {
+    return (
+      <Box
+        sx={{
+          height: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Typography variant="body1">Config not found.</Typography>
+      </Box>
+    );
+  }
 
   return (
-    <div className={styles.page}>
-      {/* Top bar */}
-      <div className={styles.topbar}>
-        <div className={styles.topbarLeft}>
-          <button className={styles.backBtn} onClick={() => navigate('/')}><ArrowLeft size={16} /></button>
-          <div className={styles.configInfo}>
-            <div className={styles.configTitle}>{config.name}</div>
-            <div className={styles.configMeta}>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100vh',
+        overflow: 'hidden',
+        bgcolor: theme.palette.background.default,
+      }}
+    >
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          p: '7.5px 20px',
+          borderBottom: `1px solid ${borderColor}`,
+          bgcolor: theme.palette.background.paper,
+          gap: 1.5,
+          flexWrap: 'wrap',
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.6, minWidth: 0, flex: 1 }}>
+          <IconButton size="small" onClick={() => navigate('/')} sx={{ border: `1px solid ${borderColor}` }}>
+            <ArrowLeft size={16} />
+          </IconButton>
+          <Box sx={{ minWidth: 0 }}>
+            <Typography variant="subtitle1" noWrap>
+              {config.name}
+            </Typography>
+            <Typography variant="caption" color="text.secondary" noWrap>
               {config.method} · {config.url}
-              {config.lastRun && ` · Last run: ${new Date(config.lastRun).toLocaleString()}`}
-            </div>
-          </div>
-        </div>
-        <div className={styles.topbarRight}>
-          <Button variant="outline" size="sm" onClick={() => navigate('/')}>Back</Button>
-          <Button variant="outline" size="sm" onClick={handleSaveConfig} loading={savingConfig}>
-            <Save size={13} /> Save
+              {config.lastRun ? ` · Last run: ${new Date(config.lastRun).toLocaleString()}` : ''}
+            </Typography>
+          </Box>
+        </Box>
+        <Stack direction="row" spacing={1} flexWrap="wrap">
+          <Button variant="outlined" color="primary" onClick={() => navigate('/')}>
+            Back
           </Button>
-          <Button size="sm" onClick={handleGenerateReport} loading={runningAll}>
-            <BarChart2 size={13} /> Generate report
+          <Button
+            variant="outlined"
+            color="primary"
+            onClick={handleSaveConfig}
+            disabled={savingConfig}
+            startIcon={savingConfig ? <CircularProgress size={14} /> : <Save size={13} />}
+          >
+            Save
           </Button>
-        </div>
-      </div>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleGenerateReport}
+            disabled={runningAll}
+            startIcon={runningAll ? <CircularProgress size={14} color="inherit" /> : <BarChart2 size={13} />}
+          >
+            Generate report
+          </Button>
+        </Stack>
+      </Box>
 
-      {/* 3-panel body */}
-      <div className={styles.panels}>
+      <Box
+        sx={{
+          flex: 1,
+          minHeight: 0,
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: '300px 1fr', lg: '325px 1fr 380px' },
+        }}
+      >
+        <Box
+          sx={{
+            borderRight: `1px solid ${borderColor}`,
+            bgcolor: theme.palette.background.paper,
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: 0,
+          }}
+        >
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              p: '12px 14px 10px',
+              borderBottom: `1px solid ${borderColor}`,
+            }}
+          >
+            <Typography variant="subtitle2">
+              Payloads
+            </Typography>
+            <Button variant="text" color="primary" startIcon={<Plus size={13} />} onClick={handleAddPayload}>
+              Add
+            </Button>
+          </Box>
 
-        {/* LEFT: Payloads list */}
-        <aside className={styles.leftPanel}>
-          <div className={styles.panelHeader}>
-            <span className={styles.panelTitle}>Payloads</span>
-            <button className={styles.addBtn} onClick={handleAddPayload} title="Add payload">
-              <Plus size={13} /> Add
-            </button>
-          </div>
-
-          <div className={styles.payloadList}>
+          <Box sx={{ flex: 1, overflowY: 'auto', p: 1 }}>
             {payloads.length === 0 && (
-              <p className={styles.emptyMsg}>No payloads yet. Click + Add.</p>
+              <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 3 }}>
+                No payloads yet. Click Add.
+              </Typography>
             )}
             {payloads.map((p) => (
-              <div
+              <Box
                 key={p._id}
-                className={`${styles.payloadItem} ${selectedPayload?._id === p._id ? styles.payloadSelected : ''}`}
                 onClick={() => selectPayload(p)}
+                sx={{
+                  p: 1.2,
+                  borderRadius: 1.5,
+                  mb: 0.5,
+                  cursor: 'pointer',
+                  border: `1px solid ${
+                    selectedPayload?._id === p._id ? theme.palette.primary.main : 'transparent'
+                  }`,
+                  bgcolor: selectedPayload?._id === p._id ? theme.palette.action.selected : 'transparent',
+                  '&:hover': { bgcolor: theme.palette.action.hover },
+                }}
               >
-                <div className={styles.payloadItemTop}>
-                  <span className={styles.payloadItemName}>{p.name}</span>
-                  <div className={styles.payloadItemActions}>
-                    {p.lastResult && <StatusBadge passed={p.lastResult.passed} />}
-                    <button
-                      className={styles.removeBtn}
-                      onClick={(e) => { e.stopPropagation(); handleDeletePayload(p._id); }}
-                    ><X size={12} /></button>
-                  </div>
-                </div>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
+                  <Typography variant="subtitle2" noWrap>
+                    {p.name}
+                  </Typography>
+                  <Stack direction="row" spacing={0.5} alignItems="center">
+                    {p.lastResult && (
+                      <Chip
+                        size="small"
+                        label={p.lastResult.passed ? 'PASS' : 'FAIL'}
+                        sx={{
+                          height: 20,
+                          fontSize: 'var(--type-overline-font-size)',
+                          fontWeight: 600,
+                          color: '#fff',
+                          bgcolor: p.lastResult.passed ? passBg : failBg,
+                        }}
+                      />
+                    )}
+                    <IconButton
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeletePayload(p._id);
+                      }}
+                      sx={{
+                        color: 'text.secondary',
+                        '&:hover': {
+                          color: theme.palette.error.main,
+                          bgcolor: '#FDECEA',
+                        },
+                      }}
+                    >
+                      <X size={12} />
+                    </IconButton>
+                  </Stack>
+                </Box>
                 {p.lastResult && (
-                  <div className={styles.payloadItemMeta}>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontFamily: 'monospace' }}>
                     HTTP {p.lastResult.statusCode} · {p.lastResult.latencyMs}ms
-                  </div>
+                  </Typography>
                 )}
-              </div>
+              </Box>
             ))}
-          </div>
+          </Box>
 
-          {/* Payload editor */}
           {selectedPayload && (
-            <div className={styles.payloadEditor}>
-              <div className={styles.fieldGroup}>
-                <label className={styles.fieldLabel}>Payload name</label>
-                <input
-                  className={styles.textInput}
+            <Box
+              sx={{
+                borderTop: `1px solid ${borderColor}`,
+                p: 1.5,
+                pb: 2,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 1.25,
+              }}
+            >
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  Payload name
+                </Typography>
+                <TextField
+                  size="small"
+                  fullWidth
                   value={payloadName}
                   onChange={(e) => setPayloadName(e.target.value)}
+                  sx={{ mt: 0.5 }}
                 />
-              </div>
-              <div className={styles.fieldGroup}>
-                <label className={styles.fieldLabel}>JSON body / params</label>
-                <CodeMirror
-                  value={payloadBody}
-                  height="120px"
-                  extensions={cmExtensions}
-                  theme="light"
-                  style={cmTheme}
-                  onChange={setPayloadBody}
-                  className={styles.codeEditor}
-                />
-              </div>
-              <div className={styles.payloadBtns}>
-                <Button size="sm" onClick={handleRunOne} loading={running}>
-                  <Play size={12} /> Run payload
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  JSON body / params
+                </Typography>
+                <Box sx={{ mt: 0.5 }}>
+                  <CodeEditor value={payloadBody} onChange={setPayloadBody} height="120px" />
+                </Box>
+              </Box>
+              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleRunOne}
+                  disabled={running}
+                  startIcon={running ? <CircularProgress size={14} color="inherit" /> : <Play size={12} />}
+                >
+                  Run payload
                 </Button>
-                <Button variant="outline" size="sm" onClick={handleRunAllWithDelay} loading={runningAll}>
+                <Button variant="outlined" color="primary" onClick={handleRunAllWithDelay} disabled={runningAll}>
                   Run all with delay
                 </Button>
-              </div>
-            </div>
+              </Box>
+              <Button variant="outlined" color="primary" onClick={handleSavePayload}>
+                Save payload
+              </Button>
+            </Box>
           )}
-        </aside>
+        </Box>
 
-        {/* CENTER: API Config */}
-        <div className={styles.centerPanel}>
-          <div className={styles.panelSection}>
-            <div className={styles.panelTitle}>API Config</div>
-            <p className={styles.panelSubtitle}>Configure method, URL, and headers.</p>
+        <Box
+          sx={{
+            overflowY: 'auto',
+            p: { xs: 1.5, md: 2.5 },
+            bgcolor: theme.palette.background.default,
+            minWidth: 0,
+          }}
+        >
+          <Box
+            sx={{
+              bgcolor: theme.palette.background.paper,
+              border: `1px solid ${borderColor}`,
+              borderRadius: 2,
+              p: { xs: 1.5, md: 2.5 },
+            }}
+          >
+            <Typography variant="subtitle2">
+              API Config
+            </Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
+              Configure method, URL, and headers.
+            </Typography>
 
-            <div className={styles.urlRow}>
-              <div className={styles.fieldGroup} style={{ width: 110 }}>
-                <label className={styles.fieldLabel}>Method</label>
-                <select className={styles.selectInput} value={method} onChange={(e) => setMethod(e.target.value)}>
-                  {METHODS.map((m) => <option key={m}>{m}</option>)}
-                </select>
-              </div>
-              <div className={styles.fieldGroup} style={{ flex: 1 }}>
-                <label className={styles.fieldLabel}>URL</label>
-                <input
-                  className={styles.textInput}
+            <Box sx={{ display: 'flex', gap: 1.25, alignItems: 'flex-end', mb: 1.75 }}>
+              <Box sx={{ width: 120 }}>
+                <Typography variant="caption" color="text.secondary">
+                  Method
+                </Typography>
+                <TextField
+                  size="small"
+                  select
+                  fullWidth
+                  value={method}
+                  onChange={(e) => setMethod(e.target.value)}
+                  sx={{ mt: 0.5 }}
+                >
+                  {METHODS.map((m) => (
+                    <MenuItem key={m} value={m}>
+                      {m}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Box>
+              <Box sx={{ flex: 1 }}>
+                <Typography variant="caption" color="text.secondary">
+                  URL
+                </Typography>
+                <TextField
+                  size="small"
+                  fullWidth
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
                   placeholder="https://api.example.com/endpoint"
+                  sx={{ mt: 0.5 }}
                 />
-              </div>
-            </div>
+              </Box>
+            </Box>
 
-            <div className={styles.fieldGroup}>
-              <label className={styles.fieldLabel}>Headers (JSON)</label>
-              <CodeMirror
-                value={headersStr}
-                height="100px"
-                extensions={cmExtensions}
-                theme="light"
-                style={cmTheme}
-                onChange={setHeadersStr}
-                className={styles.codeEditor}
-              />
-            </div>
+            <Box sx={{ mb: 1.5 }}>
+              <Typography variant="caption" color="text.secondary">
+                Headers (JSON)
+              </Typography>
+              <Box sx={{ mt: 0.5 }}>
+                <CodeEditor value={headersStr} onChange={setHeadersStr} height="100px" />
+              </Box>
+            </Box>
 
-            <div className={styles.fieldGroup}>
-              <label className={styles.fieldLabel}>Query (JSON)</label>
-              <CodeMirror
-                value={queryStr}
-                height="80px"
-                extensions={cmExtensions}
-                theme="light"
-                style={cmTheme}
-                onChange={setQueryStr}
-                className={styles.codeEditor}
-              />
-            </div>
-          </div>
+            <Box>
+              <Typography variant="caption" color="text.secondary">
+                Query (JSON)
+              </Typography>
+              <Box sx={{ mt: 0.5 }}>
+                <CodeEditor value={queryStr} onChange={setQueryStr} height="80px" />
+              </Box>
+            </Box>
+          </Box>
 
-          {/* AI Generator section */}
-          <div className={styles.panelSection} style={{ marginTop: 24 }}>
-            <div className={styles.panelTitle}>Example Generator</div>
-            <p className={styles.panelSubtitle}>
-              Provide a payload DTO (JSON object). AI will generate test variants; each becomes a separate payload. Then use "Run all with delay" to test.
-            </p>
-            <div className={styles.fieldGroup}>
-              <label className={styles.fieldLabel}>Payload DTO (JSON)</label>
-              <CodeMirror
-                value={dtoStr}
-                height="100px"
-                extensions={cmExtensions}
-                theme="light"
-                style={cmTheme}
-                onChange={setDtoStr}
-                placeholder='{ "title": "hello", "userId": 1 }'
-                className={styles.codeEditor}
-              />
-            </div>
-            <div className={styles.aiRow}>
-              <div style={{ paddingTop: 18 }}>
-                <Button variant="outline" size="sm" onClick={handleGenerateAI} loading={generatingAI}>
-                  <Zap size={13} /> Generate Examples
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
+          <Box
+            sx={{
+              mt: 3,
+              bgcolor: theme.palette.background.paper,
+              border: `1px solid ${borderColor}`,
+              borderRadius: 2,
+              p: { xs: 1.5, md: 2.5 },
+            }}
+          >
+            <Typography variant="subtitle2">
+              Example Generator
+            </Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.25, mb: 1.5 }}>
+              Provide a payload DTO JSON. AI generates test variants as separate payloads.
+            </Typography>
+            <Box>
+              <Typography variant="caption" color="text.secondary">
+                Payload DTO (JSON)
+              </Typography>
+              <Box sx={{ mt: 0.5 }}>
+                <CodeEditor
+                  value={dtoStr}
+                  onChange={setDtoStr}
+                  height="100px"
+                  placeholder='{ "title": "hello", "userId": 1 }'
+                />
+              </Box>
+            </Box>
+            <Box sx={{ mt: 1.5 }}>
+              <Button
+                variant="outlined"
+                color="primary"
+                onClick={handleGenerateAI}
+                disabled={generatingAI}
+                startIcon={generatingAI ? <CircularProgress size={14} /> : <Zap size={13} />}
+              >
+                Generate examples
+              </Button>
+            </Box>
+          </Box>
+        </Box>
 
-        {/* RIGHT: Response */}
-        <aside className={styles.rightPanel}>
-          <div className={styles.panelTitle}>Response</div>
+        <Box
+          sx={{
+            borderLeft: `1px solid ${borderColor}`,
+            bgcolor: theme.palette.background.paper,
+            p: 1.75,
+            display: { xs: 'none', lg: 'flex' },
+            flexDirection: 'column',
+            gap: 1.25,
+            minHeight: 0,
+          }}
+        >
+          <Typography variant="subtitle2">
+            Response
+          </Typography>
           {!lastResponse ? (
-            <EmptyState title="No response yet" description="Run a payload to see the response here." />
+            <Box
+              sx={{
+                border: `1px dashed ${borderColor}`,
+                borderRadius: 2,
+                p: 2,
+                textAlign: 'center',
+                color: 'text.secondary',
+              }}
+            >
+              <Typography variant="subtitle2" color="text.primary">
+                No response yet
+              </Typography>
+              <Typography variant="body2">Run a payload to see the response here.</Typography>
+            </Box>
           ) : (
-            <div className={styles.responseContent}>
-              <div className={styles.responseHeader}>
-                <span className={styles.payloadItemName}>{selectedPayload?.name}</span>
-                <span className={styles.responseMeta}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, flex: 1, minHeight: 0 }}>
+              <Box>
+                <Typography variant="subtitle2" noWrap>
+                  {selectedPayload?.name}
+                </Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ fontFamily: 'monospace' }}>
                   HTTP {lastResponse.statusCode} {lastResponse.statusText} · {lastResponse.latencyMs}ms
-                </span>
-              </div>
-              <CodeMirror
+                </Typography>
+              </Box>
+              <CodeEditor
                 value={safeJson(lastResponse.response || lastResponse.error || '')}
                 height="calc(100vh - 220px)"
-                extensions={cmExtensions}
-                theme="light"
-                style={cmTheme}
                 editable={false}
-                className={styles.codeEditor}
               />
-            </div>
+            </Box>
           )}
-        </aside>
-      </div>
-    </div>
+        </Box>
+      </Box>
+    </Box>
   );
 }
+
+
