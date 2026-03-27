@@ -9,6 +9,7 @@ const runnerRoutes = require('./routes/runner.routes');
 const reportRoutes = require('./routes/report.routes');
 const aiRoutes = require('./routes/ai.routes');
 const swaggerRoutes = require('./routes/swagger.routes');
+const postmanRoutes = require('./routes/postman.routes');
 const flowRoutes = require('./routes/flow.routes');
 const bugRoutes  = require('./routes/bug.routes');
 
@@ -27,6 +28,7 @@ app.use('/api/runner', runnerRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/swagger', swaggerRoutes);
+app.use('/api/postman', postmanRoutes);
 app.use('/api/flows', flowRoutes);
 app.use('/api/bugs',  bugRoutes);
 

@@ -607,7 +607,7 @@ function FlowDesignerInner() {
         )}
 
         {/* Run result panel */}
-        {runResult && (
+        {/* {runResult && (
           <div className={styles.resultPanel}>
             <div className={styles.resultPanelHeader}>
               <span className={styles.resultPanelTitle}>Run Result</span>
@@ -631,7 +631,7 @@ function FlowDesignerInner() {
               ))}
             </div>
           </div>
-        )}
+        )} */}
 
         {/* AI Analysis panel — bottom drawer */}
         {aiAnalysis && (

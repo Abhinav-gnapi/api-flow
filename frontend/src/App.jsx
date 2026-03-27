@@ -5,6 +5,7 @@ import DashboardPage from './pages/DashboardPage';
 import ConfigEditorPage from './pages/ConfigEditorPage';
 import ReportPage from './pages/ReportPage';
 import SwaggerPage from './pages/SwaggerPage';
+import PostmanPage from './pages/PostmanPage';
 import FlowDesignerPage from './pages/FlowDesignerPage';
 import ExecutionResults from './pages/ExecutionResults';
 
@@ -31,6 +32,7 @@ export default function App() {
           <Route path="config/:id" element={<ConfigEditorPage />} />
           <Route path="report/:id" element={<ReportPage />} />
           <Route path="swagger" element={<SwaggerPage />} />
+          <Route path="postman" element={<PostmanPage />} />
           <Route path="flows" element={<FlowDesignerPage />} />
           <Route path="flows/:id" element={<FlowDesignerPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />

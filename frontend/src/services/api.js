@@ -57,6 +57,11 @@ export const swaggerApi = {
   import:  (data) => api.post('/swagger/import', data),
 };
 
+export const postmanApi = {
+  parse:  (data) => api.post('/postman/parse', data),
+  import: (data) => api.post('/postman/import', data),
+};
+
 // ── Flows ────────────────────────────────────────────────────
 export const flowsApi = {
   getAll:  ()         => api.get('/flows'),

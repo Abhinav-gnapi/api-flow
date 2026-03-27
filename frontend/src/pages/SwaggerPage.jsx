@@ -18,6 +18,8 @@ export default function SwaggerPage() {
   const [selected, setSelected]         = useState([]);
   const [imported, setImported]         = useState(false);
 
+  const endpointSelectionKey = (index) => `endpoint-${index}`;
+
   const handleParse = async () => {
     if (!swaggerUrl.trim()) return toast.error('Enter a Swagger URL');
     setLoading(true);
@@ -36,6 +38,7 @@ export default function SwaggerPage() {
   };
 
   const toggleSelect = (path_method) => {
+    setImported(false);
     setSelected((prev) =>
       prev.includes(path_method)
         ? prev.filter((x) => x !== path_method)
@@ -45,20 +48,22 @@ export default function SwaggerPage() {
 
   const toggleAll = () => {
     if (!parsed) return;
-    const allKeys = parsed.endpoints.map((e) => `${e.method}::${e.path}`);
+    setImported(false);
+    const allKeys = parsed.endpoints.map((_, index) => endpointSelectionKey(index));
     setSelected(selected.length === allKeys.length ? [] : allKeys);
   };
 
   const handleImport = async () => {
     if (!parsed || !selected.length) return toast.error('Select at least one endpoint');
-    const endpoints = parsed.endpoints.filter((e) =>
-      selected.includes(`${e.method}::${e.path}`)
+    const endpoints = parsed.endpoints.filter((_, index) =>
+      selected.includes(endpointSelectionKey(index))
     );
     setImporting(true);
     try {
       const res = await swaggerApi.import({ endpoints, baseUrl: parsed.baseUrl });
       toast.success(`Imported ${res.created} API configs`);
       setImported(true);
+      setSelected([]);
     } catch (e) {
       toast.error(e.message);
     } finally {
@@ -123,13 +128,10 @@ export default function SwaggerPage() {
                 size="sm"
                 onClick={handleImport}
                 loading={importing}
-                disabled={!selected.length || imported}
-                variant={imported ? 'success' : 'primary'}
+                disabled={!selected.length}
+                variant="primary"
               >
-                {imported
-                  ? <><CheckCircle2 size={13} /> Imported</>
-                  : <><Database size={13} /> Import {selected.length > 0 ? `(${selected.length})` : ''}</>
-                }
+                <><Database size={13} /> Import {selected.length > 0 ? `(${selected.length})` : ''}</>
               </Button>
             </div>
           </div>
@@ -137,19 +139,19 @@ export default function SwaggerPage() {
           {/* Endpoints table */}
           <div className={styles.endpointList}>
             {parsed.endpoints.map((ep, i) => {
-              const key = `${ep.method}::${ep.path}`;
-              const isSelected = selected.includes(key);
+              const rowKey = endpointSelectionKey(i);
+              const isSelected = selected.includes(rowKey);
               return (
                 <div
-                  key={i}
+                  key={rowKey}
                   className={`${styles.endpointRow} ${isSelected ? styles.endpointSelected : ''}`}
-                  onClick={() => toggleSelect(key)}
+                  onClick={() => toggleSelect(rowKey)}
                 >
                   <input
                     type="checkbox"
                     className={styles.checkbox}
                     checked={isSelected}
-                    onChange={() => toggleSelect(key)}
+                    onChange={() => toggleSelect(rowKey)}
                     onClick={(e) => e.stopPropagation()}
                   />
                   <span
@@ -167,21 +169,6 @@ export default function SwaggerPage() {
               );
             })}
           </div>
-        </div>
-      )}
-
-      {imported && (
-        <div className={styles.successBanner}>
-          <CheckCircle2 size={18} className={styles.successIcon} />
-          <div>
-            <p className={styles.successTitle}>Import successful!</p>
-            <p className={styles.successDesc}>
-              Your API configs are ready. Go to the Dashboard to start testing with AI-generated edge cases.
-            </p>
-          </div>
-          <Button size="sm" onClick={() => window.location.href = '/'}>
-            Go to Dashboard <ArrowRight size={13} />
-          </Button>
         </div>
       )}
     </div>

@@ -1,4 +1,4 @@
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { Outlet, NavLink } from 'react-router-dom';
 import { Zap, FileCode2, GitBranch, LayoutDashboard, BookOpen, BarChart2 } from 'lucide-react';
 import styles from './Layout.module.css';
 
@@ -6,6 +6,7 @@ const navItems = [
   { to: '/',        icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/execution', icon: BarChart2,       label: 'Execution Results' },
   { to: '/swagger', icon: BookOpen,        label: 'Swagger Import' },
+  { to: '/postman', icon: FileCode2,       label: 'Postman Import' },
   { to: '/flows',   icon: GitBranch,       label: 'Flow Designer' },
 ];
 
