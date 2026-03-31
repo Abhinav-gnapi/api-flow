@@ -1,0 +1,49 @@
+name: CI
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+on:
+  pull_request: {}
+  workflow_dispatch: {}
+
+permissions:
+  actions: read
+  contents: read
+  packages: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  ci:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Authenticate with GitHub Packages
+        run: |
+          echo "//npm.pkg.github.com/:_authToken=${{ secrets.PACKAGES_PAT }}" > ~/.npmrc
+          echo "@gnapi-tech:registry=https://npm.pkg.github.com" >> ~/.npmrc
+
+      - name: Install dependencies
+        run: |
+          rm -rf node_modules
+          npm ci --legacy-peer-deps
+          npm --prefix backend ci --legacy-peer-deps
+          npm --prefix frontend ci --legacy-peer-deps
+          npm --prefix project-flow/host ci --legacy-peer-deps
+          npm --prefix project-flow/frontend-bridge ci --legacy-peer-deps
+
+      - name: Build frontend apps
+        run: |
+          npm --prefix frontend run build
+          npm --prefix project-flow/host run build
+          npm --prefix project-flow/frontend-bridge run build

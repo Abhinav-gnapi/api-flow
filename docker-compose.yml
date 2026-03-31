@@ -1,7 +1,7 @@
 services:
   mongodb:
     image: mongo:7
-    container_name: api-flow-tester-mongodb
+    container_name: api-flow-mongodb
     restart: unless-stopped
     ports:
       - "27017:27017"
@@ -12,7 +12,7 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
-    container_name: api-flow-tester-backend
+    container_name: api-flow-backend
     restart: unless-stopped
     depends_on:
       - mongodb
@@ -30,7 +30,7 @@ services:
       JIRA_API_TOKEN: ${JIRA_API_TOKEN:-}
       JIRA_PROJECT_KEY: ${JIRA_PROJECT_KEY:-}
     ports:
-      - "5000:5000"
+      - "${BACKEND_PORT:-5001}:5000"
 
   frontend:
     build:
@@ -38,7 +38,7 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_API_BASE_URL: /api
-    container_name: api-flow-tester-frontend
+    container_name: api-flow-frontend
     restart: unless-stopped
     depends_on:
       - backend

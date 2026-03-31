@@ -187,7 +187,7 @@ docker compose up --build
 
 Services:
 - Frontend: http://localhost:8080
-- Backend:  http://localhost:5000
+- Backend:  http://localhost:5001 (or `BACKEND_PORT` if overridden)
 - MongoDB:  mongodb://localhost:27017
 
 Optional environment variables for backend can be passed from your shell before running compose:

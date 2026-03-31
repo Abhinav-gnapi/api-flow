@@ -1,6 +1,7 @@
 import { Outlet, NavLink } from 'react-router-dom';
 import { Zap, FileCode2, GitBranch, LayoutDashboard, BookOpen, BarChart2 } from 'lucide-react';
 import styles from './Layout.module.css';
+import { Workflow } from 'lucide-react';
 
 const navItems = [
   { to: '/',        icon: LayoutDashboard, label: 'Dashboard' },
@@ -15,7 +16,8 @@ export default function Layout() {
     <div className={styles.shell}>
       <aside className={styles.sidebar}>
         <div className={styles.logo}>
-          <div className={styles.logoIcon}><Zap size={18} strokeWidth={2.5} /></div>
+          {/* <div className={styles.logoIcon}><Zap size={18} strokeWidth={2.5} /></div> */}
+          <Workflow style={{ fontSize: 18, color: '#91198b' }} />
           <span className={styles.logoText}>API Flow</span>
         </div>
 
