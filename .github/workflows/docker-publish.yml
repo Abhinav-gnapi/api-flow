@@ -43,6 +43,10 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Normalize repository name for GHCR
+        id: repo
+        run: echo "name=${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+
       - name: Build and push project-flow host image
         uses: docker/build-push-action@v6
         with:
@@ -52,8 +56,8 @@ jobs:
           build-args: |
             VITE_REMOTE_ENTRY_URL=http://localhost:4273/remoteEntry.js
           tags: |
-            ghcr.io/${{ github.repository }}/project-flow-host:${{ steps.version.outputs.version }}
-            ghcr.io/${{ github.repository }}/project-flow-host:latest
+            ghcr.io/${{ steps.repo.outputs.name }}/project-flow-host:${{ steps.version.outputs.version }}
+            ghcr.io/${{ steps.repo.outputs.name }}/project-flow-host:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64,linux/arm64
@@ -67,8 +71,8 @@ jobs:
           build-args: |
             VITE_LEGACY_FRONTEND_PUBLIC_URL=http://localhost:8180
           tags: |
-            ghcr.io/${{ github.repository }}/project-flow-frontend-bridge:${{ steps.version.outputs.version }}
-            ghcr.io/${{ github.repository }}/project-flow-frontend-bridge:latest
+            ghcr.io/${{ steps.repo.outputs.name }}/project-flow-frontend-bridge:${{ steps.version.outputs.version }}
+            ghcr.io/${{ steps.repo.outputs.name }}/project-flow-frontend-bridge:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64,linux/arm64

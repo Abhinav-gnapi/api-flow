@@ -154,7 +154,7 @@ const FLOW_DESIGNER_PAGE_STYLES = String.raw`.page {
 
 .flow { flex: 1; }
 
-/* â”€â”€ Custom node â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* Custom node */
 .stepNode {
   background: var(--bg-card);
   border: 1.5px solid var(--border);
@@ -166,7 +166,7 @@ const FLOW_DESIGNER_PAGE_STYLES = String.raw`.page {
   position: relative;
 }
 
-/* delete âœ• button â€” top-right corner of node */
+/* delete âœ• button — top-right corner of node */
 .nodeDeleteBtn {
   position: absolute;
   top: -8px;
@@ -302,7 +302,7 @@ const FLOW_DESIGNER_PAGE_STYLES = String.raw`.page {
   border: 2px solid #fff !important;
 }
 
-/* â”€â”€ Result panel â€” top-right overlay â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* Result panel — top-right overlay */
 .resultPanel {
   position: absolute;
   top: 60px; right: 12px;
@@ -315,7 +315,7 @@ const FLOW_DESIGNER_PAGE_STYLES = String.raw`.page {
   z-index: 10;
 }
 
-/* â”€â”€ AI Analysis panel â€” bottom drawer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* AI Analysis panel bottom drawer */
 .aiPanel {
   position: absolute;
   bottom: 0; left: 0; right: 0;
@@ -649,7 +649,7 @@ function normalizeAuthTemplate(rawValue) {
   return '';
 }
 
-/* â”€â”€ Custom node â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+
 function StepNode({ id, data, selected }) {
   // Prefer step-level Authorization, otherwise fall back to flow-level Authorization.
   const stepAuthHeader = data.headers?.Authorization || data.headers?.authorization
@@ -688,7 +688,7 @@ function StepNode({ id, data, selected }) {
       </div>
 
       {/* URL */}
-      <div className={styles.stepUrl}>{data.url || 'â€”'}</div>
+      <div className={styles.stepUrl}>{data.url}</div>
 
       {/* Auth header display */}
       {authHeader && (
@@ -785,7 +785,7 @@ function FlowDesignerInner() {
     }
   };
 
-  /* delete a node (and its connected edges) â€” defined BEFORE loadFlow/makeNodeData */
+  /* delete a node (and its connected edges) defined BEFORE loadFlow/makeNodeData */
   const handleDeleteNode = useCallback((nodeId) => {
     setNodes((nds) => nds.filter((n) => n.id !== nodeId));
     setEdges((eds) => eds.filter((e) => e.source !== nodeId && e.target !== nodeId));
@@ -1226,7 +1226,7 @@ function FlowDesignerInner() {
           </div>
         )} */}
 
-        {/* AI Analysis panel â€” bottom drawer */}
+        {/* AI Analysis panel bottom drawer */}
         {aiAnalysis && (
           <div className={styles.aiPanel}>
             {/* drawer header */}
