@@ -12,7 +12,7 @@ services:
     depends_on:
       - mongodb
     ports:
-      - "5101:5000"
+      - "5102:5000"
 
   mongodb:
     image: mongo:7
@@ -21,7 +21,7 @@ services:
     volumes:
       - mongo_data:/data/db
     ports:
-      - "27018:27017"
+      - "27019:27017"
 
   legacy-frontend:
     image: abhinav775/postman-flow:frontend
@@ -40,20 +40,20 @@ services:
     depends_on:
       - legacy-frontend
     ports:
-      - "4273:80"
+      - "4274:80"
 
   host:
     build:
       context: ./host
       args:
-        VITE_REMOTE_ENTRY_URL: http://localhost:4273/remoteEntry.js
+        VITE_REMOTE_ENTRY_URL: http://localhost:4274/remoteEntry.js
     container_name: project-flow-host
     restart: unless-stopped
     depends_on:
       - frontend-bridge
       - backend
     ports:
-      - "3300:80"
+      - "3301:80"
 
 volumes:
   mongo_data:
