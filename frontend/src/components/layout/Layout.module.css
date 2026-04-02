@@ -17,20 +17,16 @@
 .logo {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 13.5px 18px;
+  gap: 8px;
+  padding: 17.5px 18px;
   border-bottom: 1px solid var(--border);
 }
 
-.logoIcon {
-  width: 32px;
-  height: 32px;
-  background: var(--purple-600);
-  border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
+.logoMark {
+  font-size: 22px !important;
+  color: #91198b;
+  display: block;
+  transform: translateY(-1px);
   flex-shrink: 0;
 }
 
@@ -47,7 +43,7 @@
   padding: 12px 10px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
 }
 
 .navItem {

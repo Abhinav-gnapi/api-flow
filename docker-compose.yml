@@ -12,6 +12,7 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
+    image: abhinav775/api-flow-backend:latest
     container_name: api-flow-backend
     restart: unless-stopped
     depends_on:
@@ -21,7 +22,7 @@ services:
       PORT: 5000
       MONGODB_URI: ${MONGODB_URI:-mongodb://mongodb:27017/api-flow-tester}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:8080}
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-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}
       GITHUB_TOKEN: ${GITHUB_TOKEN:-}
       GITHUB_OWNER: ${GITHUB_OWNER:-}
       GITHUB_REPO: ${GITHUB_REPO:-}
@@ -38,6 +39,7 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_API_BASE_URL: /api
+    image: abhinav775/api-flow-frontend:latest
     container_name: api-flow-frontend
     restart: unless-stopped
     depends_on:

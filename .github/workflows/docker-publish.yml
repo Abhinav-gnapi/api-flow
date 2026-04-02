@@ -47,35 +47,20 @@ jobs:
         id: repo
         run: echo "name=${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
 
-      - name: Build and push project-flow host image
-        uses: docker/build-push-action@v6
-        with:
-          context: ./project-flow/host
-          file: ./project-flow/host/Dockerfile
-          push: true
-          build-args: |
-            VITE_REMOTE_ENTRY_URL=http://localhost:4273/remoteEntry.js
-          tags: |
-            ghcr.io/${{ steps.repo.outputs.name }}/project-flow-host:${{ steps.version.outputs.version }}
-            ghcr.io/${{ steps.repo.outputs.name }}/project-flow-host:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          platforms: linux/amd64,linux/arm64
-
-      - name: Build and push project-flow backend image
+      - name: Build and push backend image (root compose service)
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./backend/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ steps.repo.outputs.name }}/project-flow-backend:${{ steps.version.outputs.version }}
-            ghcr.io/${{ steps.repo.outputs.name }}/project-flow-backend:latest
+            ghcr.io/${{ steps.repo.outputs.name }}/api-flow-backend:${{ steps.version.outputs.version }}
+            ghcr.io/${{ steps.repo.outputs.name }}/api-flow-backend:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64,linux/arm64
 
-      - name: Build and push project-flow legacy-frontend image
+      - name: Build and push frontend image (root compose service)
         uses: docker/build-push-action@v6
         with:
           context: ./frontend
@@ -84,23 +69,8 @@ jobs:
           build-args: |
             VITE_API_BASE_URL=/api
           tags: |
-            ghcr.io/${{ steps.repo.outputs.name }}/project-flow-legacy-frontend:${{ steps.version.outputs.version }}
-            ghcr.io/${{ steps.repo.outputs.name }}/project-flow-legacy-frontend:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          platforms: linux/amd64,linux/arm64
-
-      - name: Build and push project-flow frontend-bridge image
-        uses: docker/build-push-action@v6
-        with:
-          context: ./project-flow/frontend-bridge
-          file: ./project-flow/frontend-bridge/Dockerfile
-          push: true
-          build-args: |
-            VITE_LEGACY_FRONTEND_PUBLIC_URL=http://localhost:8180
-          tags: |
-            ghcr.io/${{ steps.repo.outputs.name }}/project-flow-frontend-bridge:${{ steps.version.outputs.version }}
-            ghcr.io/${{ steps.repo.outputs.name }}/project-flow-frontend-bridge:latest
+            ghcr.io/${{ steps.repo.outputs.name }}/api-flow-frontend:${{ steps.version.outputs.version }}
+            ghcr.io/${{ steps.repo.outputs.name }}/api-flow-frontend:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64,linux/arm64
