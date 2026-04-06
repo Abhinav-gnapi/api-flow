@@ -14,6 +14,15 @@ export default defineConfig({
       shared: ["react", "react-dom"]
     })
   ],
+  server: {
+    // Allow host apps running on different local ports (e.g. 4200) to load remoteEntry.js in dev.
+    cors: true,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, OPTIONS",
+      "Access-Control-Allow-Headers": "*"
+    }
+  },
   build: {
     target: "esnext"
   }
