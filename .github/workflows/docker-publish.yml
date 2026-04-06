@@ -75,6 +75,21 @@ jobs:
           cache-to: type=gha,mode=max
           platforms: linux/amd64,linux/arm64
 
+      - name: Build and push frontend microfrontend image (host integration)
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          build-args: |
+            VITE_API_BASE_URL=/api/apiflow/api
+          tags: |
+            ghcr.io/${{ steps.repo.outputs.name }}/api-flow-frontend-mfe:${{ steps.version.outputs.version }}
+            ghcr.io/${{ steps.repo.outputs.name }}/api-flow-frontend-mfe:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+
       - name: Tag commit with semantic version
         run: |
           git config --global user.name "github-actions[bot]"

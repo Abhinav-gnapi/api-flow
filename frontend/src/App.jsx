@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, MemoryRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Layout from './components/layout/Layout';
 import DashboardPage from './pages/DashboardPage';
@@ -9,9 +9,30 @@ import PostmanPage from './pages/PostmanPage';
 import FlowDesignerPage from './pages/FlowDesignerPage';
 import ExecutionResults from './pages/ExecutionResults';
 
-export default function App() {
+function AppRoutes() {
   return (
-    <BrowserRouter>
+    <Routes>
+      <Route path="/" element={<Layout />}>
+        <Route index element={<DashboardPage />} />
+        <Route path="config/:id" element={<ConfigEditorPage />} />
+        <Route path="report/:id" element={<ReportPage />} />
+        <Route path="swagger" element={<SwaggerPage />} />
+        <Route path="postman" element={<PostmanPage />} />
+        <Route path="flows" element={<FlowDesignerPage />} />
+        <Route path="flows/:id" element={<FlowDesignerPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="/execution" element={<ExecutionResults />} />
+      </Route>
+    </Routes>
+  );
+}
+
+export function AppShell({ router = 'browser', initialEntries = ['/'] }) {
+  const Router = router === 'memory' ? MemoryRouter : BrowserRouter;
+  const routerProps = router === 'memory' ? { initialEntries } : {};
+
+  return (
+    <Router {...routerProps}>
       <Toaster
         position="top-center"
         toastOptions={{
@@ -26,19 +47,11 @@ export default function App() {
           error:   { iconTheme: { primary: 'var(--red-500)',   secondary: '#fff' } },
         }}
       />
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<DashboardPage />} />
-          <Route path="config/:id" element={<ConfigEditorPage />} />
-          <Route path="report/:id" element={<ReportPage />} />
-          <Route path="swagger" element={<SwaggerPage />} />
-          <Route path="postman" element={<PostmanPage />} />
-          <Route path="flows" element={<FlowDesignerPage />} />
-          <Route path="flows/:id" element={<FlowDesignerPage />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-          <Route path="/execution" element={<ExecutionResults />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+      <AppRoutes />
+    </Router>
   );
+}
+
+export default function App() {
+  return <AppShell />;
 }
