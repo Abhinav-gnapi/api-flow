@@ -1,10 +1,11 @@
 ﻿import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Download, ChevronDown, ChevronUp } from 'lucide-react';
+import { Download, ChevronDown, ChevronUp } from 'lucide-react';
 import { reportsApi } from '../services/api';
 import { Button, StatusBadge, Spinner } from '../components/ui';
 import { useInlinePageStyles } from '../theme/useInlinePageStyles';
+import { PreviousPageArrow } from '../theme/components/PreviousPageArrow';
 
 const styles = new Proxy({}, { get: (_, key) => String(key) });
 const REPORT_PAGE_STYLES = String.raw`.page {
@@ -25,13 +26,26 @@ const REPORT_PAGE_STYLES = String.raw`.page {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 28px;
+  padding: 4.6px 10px;
   background: var(--bg-card);
   border-bottom: 1px solid var(--border);
 }
 
 .topbarLeft { display: flex; align-items: center; gap: 12px; }
 .topbarRight { display: flex; gap: 8px; }
+.backBtn {
+  width: 30px;
+  height: 30px;
+  border: none;
+  background: transparent;
+  border-radius: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+.backBtn:hover { background: transparent; }
 
 .title {
   font-size: var(--type-h6-font-size);
@@ -56,7 +70,7 @@ const REPORT_PAGE_STYLES = String.raw`.page {
   width: 100%;
 }
 
-/* â”€â”€ Summary bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* Summary bar */
 .summaryBar {
   display: flex;
   align-items: center;
@@ -110,7 +124,7 @@ const REPORT_PAGE_STYLES = String.raw`.page {
 .passBadge { background: var(--green-500); color: #fff; }
 .failBadge { background: var(--red-500);   color: #fff; }
 
-/* â”€â”€ Progress â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* Progress */
 .progressSection {
   display: flex;
   align-items: center;
@@ -142,7 +156,7 @@ const REPORT_PAGE_STYLES = String.raw`.page {
   white-space: nowrap;
 }
 
-/* â”€â”€ Results section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* Results section */
 .resultsSection {
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -174,7 +188,7 @@ const REPORT_PAGE_STYLES = String.raw`.page {
 
 .resultsList { }
 
-/* â”€â”€ Result row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* Result row */
 .resultRow {
   border-bottom: 1px solid var(--border);
 }
@@ -225,7 +239,7 @@ const REPORT_PAGE_STYLES = String.raw`.page {
   align-items: center;
 }
 
-/* â”€â”€ Expanded detail â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* Expanded detail */
 .resultDetail {
   padding: 0 20px 16px;
   background: var(--bg-code);
@@ -311,16 +325,21 @@ const REPORT_PAGE_STYLES = String.raw`.page {
   }
 
   .resultDetail { display: block !important; }
+
+  .jsonBlock {
+    max-height: none !important;
+    overflow: visible !important;
+  }
 }
 `;
 
 function formatDate(d) {
-  return d ? new Date(d).toLocaleString() : 'â€”';
+  return d ? new Date(d).toLocaleString() : '--';
 }
 
 function ResultRow({ result, isPrinting }) {
   const [expanded, setExpanded] = useState(false);
-  const showDetail = expanded || (isPrinting && !result.passed);
+  const showDetail = expanded || isPrinting;
 
   return (
     <div className={styles.resultRow}>
@@ -328,7 +347,7 @@ function ResultRow({ result, isPrinting }) {
         <div className={styles.resultLeft}>
           <span className={styles.resultName}>{result.payloadName}</span>
           <span className={styles.resultMeta}>
-            HTTP {result.statusCode} {result.statusText} Â· {result.latencyMs}ms
+            HTTP {result.statusCode} {result.statusText} - {result.latencyMs}ms
           </span>
         </div>
         <div className={styles.resultRight}>
@@ -414,17 +433,17 @@ export default function ReportPage() {
       {/* Top bar */}
       <div className={styles.topbar}>
         <div className={styles.topbarLeft}>
+          <button className={styles.backBtn} onClick={() => navigate(`/config/${report.configId}`)}>
+            <PreviousPageArrow width={24} height={24} />
+          </button>
           <div className={styles.titleBlock}>
-            <h1 className={styles.title}>Report Â· {report.configName}</h1>
+            <h1 className={styles.title}>Report - {report.configName}</h1>
             <p className={styles.subtitle}>Last run: {formatDate(report.runAt)}</p>
           </div>
         </div>
         <div className={styles.topbarRight}>
           <Button variant="outline" size="sm" onClick={handleDownloadPDF}>
             <Download size={13} /> Download PDF
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => navigate(`/config/${report.configId}`)}>
-            <ArrowLeft size={13} /> Back
           </Button>
         </div>
       </div>

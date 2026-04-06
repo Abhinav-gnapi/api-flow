@@ -15,10 +15,11 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import toast from 'react-hot-toast';
-import { Plus, Play, Zap, ArrowLeft, Save, Trash2, X, ChevronRight, KeyRound } from 'lucide-react';
+import { Plus, Play, Zap, Save, Trash2, X, ChevronRight, KeyRound } from 'lucide-react';
 import { flowsApi, aiApi } from '../services/api';
 import { Button, Spinner, Modal, Input, Select, EmptyState } from '../components/ui';
 import { useInlinePageStyles } from '../theme/useInlinePageStyles';
+import { PreviousPageArrow } from '../theme/components/PreviousPageArrow';
 
 
 const styles = new Proxy({}, { get: (_, key) => String(key) });
@@ -36,7 +37,7 @@ const FLOW_DESIGNER_PAGE_STYLES = String.raw`.page {
   flex: 1;
 }
 
-/* â”€â”€ Flow list sidebar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* Flow list sidebar */
 .flowList {
   width: 200px;
   flex-shrink: 0;
@@ -111,7 +112,7 @@ const FLOW_DESIGNER_PAGE_STYLES = String.raw`.page {
 }
 .removeBtn:hover { background: #fee2e2; color: var(--red-500); }
 
-/* â”€â”€ Canvas wrap â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* Canvas wrap */
 .canvasWrap {
   flex: 1;
   display: flex;
@@ -133,15 +134,15 @@ const FLOW_DESIGNER_PAGE_STYLES = String.raw`.page {
 .toolbarRight { display: flex; align-items: center; gap: 8px; }
 
 .backBtn {
-  width: 30px; height: 30px; border: 1px solid var(--border);
-  background: transparent; border-radius: var(--radius-md);
+  width: 30px; height: 30px; border: none;
+  background: transparent; border-radius: 0;
   display: flex; align-items: center; justify-content: center;
   cursor: pointer; color: var(--text-secondary);
 }
-.backBtn:hover { background: var(--bg-hover); }
+.backBtn:hover { background: transparent; }
 
 .flowTitle {
-  font-size: var(--type-subtitle1-font-size);
+  font-size: 24px;
   font-weight: 600;
   line-height: var(--type-subtitle1-line-height);
   letter-spacing: var(--type-subtitle1-letter-spacing);
@@ -166,7 +167,7 @@ const FLOW_DESIGNER_PAGE_STYLES = String.raw`.page {
   position: relative;
 }
 
-/* delete âœ• button — top-right corner of node */
+/* Delete button (top-right corner of node) */
 .nodeDeleteBtn {
   position: absolute;
   top: -8px;
@@ -388,7 +389,7 @@ const FLOW_DESIGNER_PAGE_STYLES = String.raw`.page {
   font-family: var(--font-mono);
 }
 
-/* â”€â”€ AI panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* AI panel */
 .aiDrawerBody {
   display: flex;
   flex-direction: row;
@@ -440,7 +441,7 @@ const FLOW_DESIGNER_PAGE_STYLES = String.raw`.page {
   margin-top: 2px;
 }
 
-/* â”€â”€ Step editor sidebar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* Step editor sidebar */
 .stepEditor {
   width: 280px;
   flex-shrink: 0;
@@ -515,7 +516,7 @@ const FLOW_DESIGNER_PAGE_STYLES = String.raw`.page {
 }
 .editorTextarea:focus { outline: none; border-color: var(--border-focus); }
 
-/* â”€â”€ New flow modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* New flow modal */
 .newFlowForm { display: flex; flex-direction: column; gap: 14px; }
 .modalActions { display: flex; justify-content: flex-end; gap: 8px; }
 
@@ -613,6 +614,25 @@ const METHOD_COLORS = {
   PATCH: '#8b5cf6', DELETE: '#ef4444',
 };
 
+
+const DEFAULT_STATUS_TEXT = {
+  200: 'Success',
+  201: 'Created',
+  202: 'Accepted',
+  204: 'No Content',
+  400: 'Bad Request',
+  401: 'Unauthorized',
+  403: 'Forbidden',
+  404: 'Not Found',
+  409: 'Conflict',
+  422: 'Unprocessable Entity',
+  429: 'Too Many Requests',
+  500: 'Server Error',
+  502: 'Bad Gateway',
+  503: 'Service Unavailable',
+  504: 'Gateway Timeout',
+};
+
 function normalizeAuthTemplate(rawValue) {
   if (typeof rawValue === 'string') {
     const trimmed = rawValue.trim();
@@ -649,6 +669,12 @@ function normalizeAuthTemplate(rawValue) {
   return '';
 }
 
+function getStatusLabel(code, statusText) {
+  if (typeof statusText === 'string' && statusText.trim()) return statusText.trim();
+  if (code === 0) return 'Network Error';
+  return DEFAULT_STATUS_TEXT[code] || 'Unknown';
+}
+
 
 function StepNode({ id, data, selected }) {
   // Prefer step-level Authorization, otherwise fall back to flow-level Authorization.
@@ -665,6 +691,7 @@ function StepNode({ id, data, selected }) {
 
   // Show inject variable keys (what this step consumes)
   const injectKeys  = Object.keys(data.injectVariables  || {});
+  const resultStatusLabel = data.result ? getStatusLabel(data.result.statusCode, data.result.statusText) : '';
 
   return (
     <div className={`${styles.stepNode} ${selected ? styles.stepNodeSelected : ''}`}>
@@ -695,7 +722,7 @@ function StepNode({ id, data, selected }) {
         <div className={styles.stepAuthRow}>
           <span className={styles.stepAuthKey}>Authorization{authIsFlowLevel ? ' (flow)' : ''}</span>
           <span className={styles.stepAuthVal}>
-            {authHeader.length > 28 ? authHeader.slice(0, 28) + 'â€¦' : authHeader}
+            {authHeader.length > 28 ? authHeader.slice(0, 28) + '...' : authHeader}
           </span>
         </div>
       )}
@@ -705,12 +732,12 @@ function StepNode({ id, data, selected }) {
         <div className={styles.stepVarRow}>
           {extractKeys.map(k => (
             <span key={k} className={styles.stepVarExtract} title={`Extracts: ${k}`}>
-              â†‘ {k}
+              extract: {k}
             </span>
           ))}
           {injectKeys.map(k => (
             <span key={k} className={styles.stepVarInject} title={`Injects: ${k}`}>
-              â†“ {k}
+              inject: {k}
             </span>
           ))}
         </div>
@@ -719,7 +746,7 @@ function StepNode({ id, data, selected }) {
       {/* Run result */}
       {data.result && (
         <div className={`${styles.stepResult} ${data.result.passed ? styles.stepPass : styles.stepFail}`}>
-          {data.result.statusCode} Â· {data.result.latencyMs}ms
+          {data.result.statusCode} - {resultStatusLabel} {data.result.latencyMs}ms
         </div>
       )}
 
@@ -1141,7 +1168,9 @@ function FlowDesignerInner() {
         {/* Toolbar */}
         <div className={styles.toolbar}>
           <div className={styles.toolbarLeft}>
-            <button className={styles.backBtn} onClick={() => navigate('/')}><ArrowLeft size={15} /></button>
+            <button className={styles.backBtn} onClick={() => navigate('/')}>
+              <PreviousPageArrow width={24} height={24} />
+            </button>
             <span className={styles.flowTitle}>{activeFlow?.name || 'Flow Designer'}</span>
           </div>
           <div className={styles.toolbarRight}>
@@ -1284,7 +1313,7 @@ function FlowDesignerInner() {
                     {aiAnalysis.securityConcerns.map((sc, i) => (
                       <div key={i} className={`${styles.aiItem} ${styles.aiHigh}`}>
                         <p className={styles.aiItemTitle}>{sc.concern}</p>
-                        <p className={styles.aiItemDesc}>Step: {sc.step} Â· Severity: {sc.severity}</p>
+                        <p className={styles.aiItemDesc}>Step: {sc.step} - Severity: {sc.severity}</p>
                       </div>
                     ))}
                   </div>
@@ -1420,7 +1449,7 @@ function FlowDesignerInner() {
   );
 }
 
-/* â”€â”€ Wrap with ReactFlowProvider so useReactFlow() works â”€â”€â”€â”€ */
+/* Wrap with ReactFlowProvider so useReactFlow() works */
 export default function FlowDesignerPage() {
   return (
     <ReactFlowProvider>

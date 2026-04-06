@@ -86,7 +86,7 @@ const SWAGGER_PAGE_STYLES = String.raw`.page {
   font-family: var(--font-mono);
 }
 
-/* â”€â”€ Parsed results â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* Parsed results */
 .parsedHeader {
   display: flex;
   align-items: flex-start;
@@ -119,7 +119,7 @@ const SWAGGER_PAGE_STYLES = String.raw`.page {
   flex-shrink: 0;
 }
 
-/* â”€â”€ Endpoint list â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* Endpoint list */
 .endpointList {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
@@ -186,7 +186,7 @@ const SWAGGER_PAGE_STYLES = String.raw`.page {
   flex-shrink: 0;
 }
 
-/* â”€â”€ Success banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* Success banner */
 .successBanner {
   display: flex;
   align-items: center;
@@ -404,7 +404,7 @@ export default function SwaggerPage() {
             <div>
               <h2 className={styles.parsedTitle}>{parsed.title}</h2>
               <p className={styles.parsedMeta}>
-                Version {parsed.version} Â· {parsed.baseUrl} Â· {parsed.total} endpoints found
+                Version {parsed.version} - {parsed.baseUrl} - {parsed.total} endpoints found
               </p>
             </div>
             <div className={styles.parsedActions}>

@@ -68,6 +68,16 @@ function escapeHtml(value) {
     .replace(/\'/g, '&#39;');
 }
 
+function formatReportJson(value) {
+  if (value === null || value === undefined) return '-';
+  if (typeof value === 'string') return value;
+  try {
+    return JSON.stringify(value, null, 2);
+  } catch {
+    return String(value);
+  }
+}
+
 /* ─────────────────────────────────────────────────────────────
    Sub-components
 ───────────────────────────────────────────────────────────── */
@@ -148,11 +158,11 @@ function downloadReportPDF(report) {
   const safeRunAt = escapeHtml(new Date(report.runAt).toLocaleString());
 
   const resultRows = (report.results || []).map((r, i) => {
-    const payloadBody = escapeHtml(JSON.stringify(r.payloadBody ?? {}, null, 2));
+    const payloadBody = escapeHtml(formatReportJson(r.payloadBody));
     const responseBody = escapeHtml(
       typeof r.error === 'string'
         ? r.error
-        : JSON.stringify(r.response ?? {}, null, 2)
+        : formatReportJson(r.response)
     );
     const payloadName = escapeHtml(r.payloadName || '-');
     const edgeCaseType = escapeHtml(r.edgeCaseType || '-');
@@ -166,21 +176,20 @@ function downloadReportPDF(report) {
       <td style="padding:10px 14px;font-size:12px;font-family:monospace">${r.latencyMs ?? '-'}ms</td>
       <td style="padding:10px 14px;font-weight:700;font-size:12px;color:${r.passed ? '#16a34a' : '#dc2626'}">${r.passed ? 'PASS' : 'FAIL'}</td>
     </tr>
-    ${!r.passed ? `
-    <tr style="background:#fff5f5">
+    <tr style="background:${r.passed ? '#f0fdf4' : '#fff5f5'}">
       <td colspan="5" style="padding:8px 14px 14px 32px">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
           <div>
             <div style="font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;margin-bottom:4px">Request Payload</div>
-            <pre style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:8px;font-size:11px;overflow:auto;max-height:120px;white-space:pre-wrap">${payloadBody}</pre>
+            <pre style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:8px;font-size:11px;overflow:visible;white-space:pre-wrap;word-break:break-word">${payloadBody}</pre>
           </div>
           <div>
             <div style="font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;margin-bottom:4px">Response</div>
-            <pre style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:8px;font-size:11px;overflow:auto;max-height:120px;white-space:pre-wrap">${responseBody}</pre>
+            <pre style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:8px;font-size:11px;overflow:visible;white-space:pre-wrap;word-break:break-word">${responseBody}</pre>
           </div>
         </div>
       </td>
-    </tr>` : ''}
+    </tr>
   `;
   }).join('');
 

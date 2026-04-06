@@ -1,7 +1,7 @@
 ﻿import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Plus, X, Play, Zap, Save, ArrowLeft, BarChart2 } from 'lucide-react';
+import { Plus, X, Play, Zap, Save, BarChart2 } from 'lucide-react';
 import CodeMirror from '@uiw/react-codemirror';
 import { json } from '@codemirror/lang-json';
 import {
@@ -17,6 +17,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { configsApi, payloadsApi, runnerApi, aiApi } from '../services/api';
+import { PreviousPageArrow } from '../theme/components/PreviousPageArrow';
 
 const METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
 const cmExtensions = [json()];
@@ -358,8 +359,17 @@ export default function ConfigEditorPage() {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.6, minWidth: 0, flex: 1 }}>
-          <IconButton size="small" onClick={() => navigate('/')} sx={{ border: `1px solid ${borderColor}` }}>
-            <ArrowLeft size={16} />
+          <IconButton
+            size="small"
+            onClick={() => navigate('/')}
+            sx={{
+              border: 'none',
+              borderRadius: 0,
+              bgcolor: 'transparent',
+              '&:hover': { bgcolor: 'transparent' },
+            }}
+          >
+            <PreviousPageArrow width={24} height={24} />
           </IconButton>
           <Box sx={{ minWidth: 0 }}>
             <Typography variant="subtitle1" noWrap>
@@ -719,5 +729,3 @@ export default function ConfigEditorPage() {
     </Box>
   );
 }
-
-
