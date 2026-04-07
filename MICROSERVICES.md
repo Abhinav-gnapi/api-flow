@@ -1,6 +1,6 @@
 # Microservices Documentation
 
-This document describes the microservices architecture across both runtime modes in this repository:
+This document describes the two runtime modes in this repository:
 
 - Core stack (`docker-compose.yml` at repo root)
 - Federated stack (`project-flow/docker-compose.yml`)
@@ -19,11 +19,10 @@ This document describes the microservices architecture across both runtime modes
 
 | Service | Container | Port(s) | Responsibility |
 |---|---|---|---|
-| `host` | `project-flow-host` | `3300 -> 80` | React host app (Module Federation consumer) |
-| `frontend-bridge` | `project-flow-frontend-bridge` | `4273 -> 80` | Exposes remote module (`remoteEntry.js`) |
-| `legacy-frontend` | `project-flow-legacy-frontend` | `8180 -> 80` | Existing frontend image rendered in iframe |
-| `backend` | `project-flow-backend` | `5101 -> 5000` | Same backend API image |
-| `mongodb` | `project-flow-mongodb` | `27018 -> 27017` | Data store for project-flow stack |
+| `host` | `project-flow-host` | `3301 -> 80` | React host app (Module Federation consumer) |
+| `frontend` | `project-flow-frontend` | `8180 -> 80` | Reused frontend image that serves `remoteEntry.js` |
+| `backend` | `project-flow-backend` | `5102 -> 5000` | Same backend API image |
+| `mongodb` | `project-flow-mongodb` | `27019 -> 27017` | Data store for project-flow stack |
 
 ## 2. Architecture Diagrams
 
@@ -41,13 +40,13 @@ Browser
 ### 2.2 Federated Stack Request Flow
 
 ```text
-Browser (localhost:3300)
+Browser (localhost:3301)
   -> host app
-      -> loads remoteEntry.js from frontend-bridge (localhost:4273)
-          -> renders legacy-frontend iframe (localhost:8180)
-              -> legacy frontend calls /api via its own config
-                  -> backend (localhost:5101)
-                      -> MongoDB (localhost:27018)
+      -> loads remoteEntry.js from frontend (localhost:8180)
+          -> renders legacyFrontend/LegacyFrontend
+              -> /api requests handled by host Nginx proxy
+                  -> backend (localhost:5102)
+                      -> MongoDB (localhost:27019)
 ```
 
 ## 3. Service Details
@@ -67,32 +66,21 @@ Backend feature modules:
 
 See detailed API and model docs in `backend/README.md`.
 
-### 3.2 Frontend (Core Stack)
+### 3.2 Frontend
 
 - built from `frontend/Dockerfile`
 - served via Nginx (`frontend/nginx.conf`)
-- Nginx proxies `/api/` to `http://backend:5000/api/`
-- default runtime URL: `http://localhost:8080`
+- exposes `remoteEntry.js` for Module Federation
+- supports `/api/` proxying to backend in standalone frontend mode
 
 ### 3.3 Host (Federated)
 
 - built from `project-flow/host`
-- consumes `frontendBridge/LegacyFrontend` through Module Federation
+- consumes `legacyFrontend/LegacyFrontend` through Module Federation
 - remote entry URL controlled by `VITE_REMOTE_ENTRY_URL`
+- proxies `/api/` to `backend:5000`
 
-### 3.4 Frontend Bridge
-
-- built from `project-flow/frontend-bridge`
-- exposes `./LegacyFrontend` through `remoteEntry.js`
-- applies CORS headers for `remoteEntry.js` and `/assets/*`
-- bridge renders legacy frontend via iframe
-
-### 3.5 Legacy Frontend
-
-- Docker image reuse of existing frontend
-- injected public URL in bridge using `VITE_LEGACY_FRONTEND_PUBLIC_URL`
-
-### 3.6 MongoDB
+### 3.4 MongoDB
 
 - standalone Mongo container per stack
 - persistent Docker volume mounted at `/data/db`
@@ -104,7 +92,7 @@ See detailed API and model docs in `backend/README.md`.
 | Variable | Purpose | Required |
 |---|---|---|
 | `MONGODB_URI` | DB connection URI | Yes |
-| `FRONTEND_URL` | CORS origin | No |
+| `FRONTEND_URL` / `FRONTEND_URLS` | Allowed CORS origin(s) | No |
 | `OPENAI_API_KEY` | AI endpoints | Optional |
 | `GITHUB_*` | GitHub issue integration | Optional |
 | `JIRA_*` | Jira issue integration | Optional |
@@ -115,7 +103,6 @@ See detailed API and model docs in `backend/README.md`.
 |---|---|---|
 | core `frontend` | `VITE_API_BASE_URL` | frontend API base path (typically `/api`) |
 | `project-flow/host` | `VITE_REMOTE_ENTRY_URL` | remote module URL |
-| `project-flow/frontend-bridge` | `VITE_LEGACY_FRONTEND_PUBLIC_URL` | iframe target for legacy frontend |
 
 ## 5. Deployment Modes
 
@@ -134,7 +121,7 @@ cd project-flow
 docker compose up --build
 ```
 
-Use when validating Module Federation layering (`host -> bridge -> legacy frontend`).
+Use when validating Module Federation with direct frontend remote loading (`host -> frontend`).
 
 ## 6. CI/CD and Image Publishing
 
@@ -144,10 +131,8 @@ What it does:
 
 - computes semantic version tag
 - builds and pushes images to GHCR:
-  - `project-flow-host`
-  - `project-flow-backend`
-  - `project-flow-legacy-frontend`
-  - `project-flow-frontend-bridge`
+  - `api-flow-backend`
+  - `api-flow-frontend`
 - tags repository commit with generated semantic version
 
 ## 7. Operational Runbook
@@ -169,19 +154,19 @@ For project-flow stack:
 
 ```bash
 cd project-flow
-docker compose logs -f host frontend-bridge legacy-frontend backend mongodb
+docker compose logs -f host frontend backend mongodb
 ```
 
 ### 7.3 Common Failures
 
 1. `CORS blocked`:
-- `FRONTEND_URL` does not match the actual browser origin.
+- `FRONTEND_URL`/`FRONTEND_URLS` does not include the active browser origin.
 
 2. `API 502/404 via frontend`:
 - Nginx `/api` proxy target mismatch or backend not healthy.
 
 3. `Module Federation remote load failure`:
-- `VITE_REMOTE_ENTRY_URL` invalid or bridge container unavailable.
+- `VITE_REMOTE_ENTRY_URL` invalid or frontend container unavailable.
 
 4. `Mongo connection failure`:
 - `MONGODB_URI` wrong host/port for current stack.
@@ -192,7 +177,6 @@ docker compose logs -f host frontend-bridge legacy-frontend backend mongodb
 ## 8. Security and Hardening Notes
 
 - Never commit `.env` with real secrets.
-- Restrict `FRONTEND_URL` to trusted origins.
+- Restrict `FRONTEND_URL`/`FRONTEND_URLS` to trusted origins.
 - Use HTTPS + reverse proxy in production.
 - Consider auth/rate limiting for backend APIs before public exposure.
-

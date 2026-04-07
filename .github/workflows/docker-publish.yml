@@ -47,20 +47,20 @@ jobs:
         id: repo
         run: echo "name=${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
 
-      - name: Build and push backend image (root compose service)
+      - name: Build and push backend image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./backend/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ steps.repo.outputs.name }}/api-flow-backend:${{ steps.version.outputs.version }}
-            ghcr.io/${{ steps.repo.outputs.name }}/api-flow-backend:latest
+            ghcr.io/${{ steps.repo.outputs.name }}/apiflow-backend:${{ steps.version.outputs.version }}
+            ghcr.io/${{ steps.repo.outputs.name }}/apiflow-backend:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64,linux/arm64
 
-      - name: Build and push frontend image (root compose service)
+      - name: Build and push frontend image
         uses: docker/build-push-action@v6
         with:
           context: ./frontend
@@ -69,23 +69,8 @@ jobs:
           build-args: |
             VITE_API_BASE_URL=/api
           tags: |
-            ghcr.io/${{ steps.repo.outputs.name }}/api-flow-frontend:${{ steps.version.outputs.version }}
-            ghcr.io/${{ steps.repo.outputs.name }}/api-flow-frontend:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          platforms: linux/amd64,linux/arm64
-
-      - name: Build and push frontend microfrontend image (host integration)
-        uses: docker/build-push-action@v6
-        with:
-          context: ./frontend
-          file: ./frontend/Dockerfile
-          push: true
-          build-args: |
-            VITE_API_BASE_URL=/api/apiflow/api
-          tags: |
-            ghcr.io/${{ steps.repo.outputs.name }}/api-flow-frontend-mfe:${{ steps.version.outputs.version }}
-            ghcr.io/${{ steps.repo.outputs.name }}/api-flow-frontend-mfe:latest
+            ghcr.io/${{ steps.repo.outputs.name }}/apiflow-frontend:${{ steps.version.outputs.version }}
+            ghcr.io/${{ steps.repo.outputs.name }}/apiflow-frontend:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64,linux/arm64
