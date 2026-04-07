@@ -362,13 +362,13 @@ function ResultRow({ result, isPrinting }) {
         <div className={styles.resultDetail}>
           <div className={styles.detailGrid}>
             <div className={styles.detailPane}>
-              <div className={styles.detailLabel}>PAYLOAD SENT</div>
+              <div className={styles.detailLabel}>Payload Sent</div>
               <pre className={styles.jsonBlock}>
                 {JSON.stringify(result.payloadBody, null, 2)}
               </pre>
             </div>
             <div className={styles.detailPane}>
-              <div className={styles.detailLabel}>RESPONSE RECEIVED</div>
+              <div className={styles.detailLabel}>Response Received</div>
               <pre className={styles.jsonBlock}>
                 {result.error
                   ? result.error
@@ -499,5 +499,4 @@ export default function ReportPage() {
     </div>
   );
 }
-
 

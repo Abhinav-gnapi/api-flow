@@ -180,11 +180,11 @@ function downloadReportPDF(report) {
       <td colspan="5" style="padding:8px 14px 14px 32px">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
           <div>
-            <div style="font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;margin-bottom:4px">Request Payload</div>
+            <div style="font-size:10px;font-weight:700;color:#9ca3af;text-transform:capitalize;margin-bottom:4px">Request Payload</div>
             <pre style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:8px;font-size:11px;overflow:visible;white-space:pre-wrap;word-break:break-word">${payloadBody}</pre>
           </div>
           <div>
-            <div style="font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;margin-bottom:4px">Response</div>
+            <div style="font-size:10px;font-weight:700;color:#9ca3af;text-transform:capitalize;margin-bottom:4px">Response</div>
             <pre style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:8px;font-size:11px;overflow:visible;white-space:pre-wrap;word-break:break-word">${responseBody}</pre>
           </div>
         </div>
@@ -211,7 +211,7 @@ function downloadReportPDF(report) {
     .progress-bar  { height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden; margin-bottom: 28px; }
     .progress-fill { height: 100%; background: #22c55e; border-radius: 4px; width: ${report.totalPayloads > 0 ? (report.passed / report.totalPayloads) * 100 : 0}%; }
     table { width: 100%; border-collapse: collapse; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
-    th { padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; background: #f9fafb; border-bottom: 1px solid #e5e7eb; }
+    th { padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 700; color: #9ca3af; text-transform: capitalize; letter-spacing: 0.5px; background: #f9fafb; border-bottom: 1px solid #e5e7eb; }
     @media print { body { padding: 20px; } }
   </style>
 </head>
@@ -421,7 +421,7 @@ function ResultsDrawer({ report, onClose }) {
             <thead>
               <tr style={{ background: '#fafafa', position: 'sticky', top: 0, zIndex: 1 }}>
                 {['Payload Name', 'Edge Case', 'Status', 'Latency', 'Result', 'Download'].map(h => (
-                  <th key={h} style={{ padding: '10px 20px', textAlign: 'left', fontSize: 'var(--type-overline-font-size)', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.6, borderBottom: '1px solid #f3f4f6' }}>{h}</th>
+                  <th key={h} style={{ padding: '10px 20px', textAlign: 'left', fontSize: 'var(--type-overline-font-size)', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'capitalize', letterSpacing: 0.6, borderBottom: '1px solid #f3f4f6' }}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -602,9 +602,9 @@ export default function ExecutionResults() {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 24 }}>
         <StatCard label="Total Executions" value={totalExecutions.toLocaleString()} />
-        <StatCard label="Failures" value={totalFailed} sub={totalFailed > 0 ? 'Needs attention' : 'All passing'} subColor={totalFailed > 0 ? '#dc2626' : '#16a34a'} valueColor={totalFailed > 0 ? '#dc2626' : '#111827'} />
-        <StatCard label="Avg Latency" value={avgLatency ? `${avgLatency}ms` : '—'} sub="across all runs" />
-        <StatCard label="Pass Rate" value={`${passRate}%`} sub={`${totalPassed} passed`} subColor="#16a34a" />
+        <StatCard label="Failures" value={totalFailed} sub={totalFailed > 0 ? 'Needs Attention' : 'All Passing'} subColor={totalFailed > 0 ? '#dc2626' : '#16a34a'} valueColor={totalFailed > 0 ? '#dc2626' : '#111827'} />
+        <StatCard label="Avg Latency" value={avgLatency ? `${avgLatency}ms` : '—'} sub="Across All Runs" />
+        <StatCard label="Pass Rate" value={`${passRate}%`} sub={`${totalPassed} Passed`} subColor="#16a34a" />
       </div>
 
       <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #d9dee8', overflow: 'hidden' }}>
@@ -643,12 +643,12 @@ export default function ExecutionResults() {
                 onMouseLeave={e => e.currentTarget.style.background = '#fff'}>
                 <Download size={13} /> Download PDF{selected.size > 1 ? 's' : ''}
               </button>
-              <button onClick={() => setShowBug(true)}
+              {/* <button onClick={() => setShowBug(true)}
                 style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 8, border: '1px solid #fca5a5', background: '#fff', color: '#ef4444', fontSize: 'var(--type-caption-font-size)', fontWeight: 600, cursor: 'pointer' }}
                 onMouseEnter={e => e.currentTarget.style.background = '#fff1f1'}
                 onMouseLeave={e => e.currentTarget.style.background = '#fff'}>
                 <Bug size={13} /> Report Bug
-              </button>
+              </button> */}
               <button onClick={() => setSelected(new Set())}
                 style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', color: 'var(--text-muted)', fontSize: 'var(--type-caption-font-size)', cursor: 'pointer' }}>
                 Clear
@@ -745,14 +745,14 @@ export default function ExecutionResults() {
                           onMouseLeave={e => e.currentTarget.style.background = '#fff'}>
                           <Download size={13} />
                         </button>
-                        {report.failed > 0 && (
+                        {/* {report.failed > 0 && (
                           <button onClick={() => { setSelected(new Set([report._id])); setShowBug(true); }} title="Report bug for failed cases"
                             style={{ width: 30, height: 30, borderRadius: 6, border: '1px solid #fca5a5', background: '#fff', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                             onMouseEnter={e => e.currentTarget.style.background = '#fff1f1'}
                             onMouseLeave={e => e.currentTarget.style.background = '#fff'}>
                             <Bug size={13} />
                           </button>
-                        )}
+                        )} */}
                         <button onClick={e => handleDelete(e, report._id, report.configName)} disabled={deleting === report._id} title="Delete report"
                           style={{ width: 30, height: 30, borderRadius: 6, border: '1px solid #fee2e2', background: '#fff', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: deleting === report._id ? 0.5 : 1 }}
                           onMouseEnter={e => e.currentTarget.style.background = '#fff1f1'}

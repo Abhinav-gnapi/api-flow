@@ -81,7 +81,7 @@ cp .env.example .env
 PORT=5000
 MONGODB_URI=mongodb://localhost:27017/api-flow-tester
 GEMINI_API_KEY=AIza...                 # Get from aistudio.google.com
-FRONTEND_URL=http://localhost:5173
+FRONTEND_URLS=http://localhost:5173,http://localhost:4200
 ```
 
 **Frontend** — copy and fill in:

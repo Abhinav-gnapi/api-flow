@@ -105,7 +105,7 @@
   --type-button-font-weight: 500;
   --type-button-line-height: 17px;
   --type-button-letter-spacing: 0.75px;
-  --type-button-text-transform: uppercase;
+  --type-button-text-transform: capitalize;
 
   --type-caption-font-size: 0.875rem;
   --type-caption-font-weight: 400;
@@ -116,7 +116,7 @@
   --type-overline-font-weight: 400;
   --type-overline-line-height: 20px;
   --type-overline-letter-spacing: 0.25px;
-  --type-overline-text-transform: uppercase;
+  --type-overline-text-transform: capitalize;
 }
 
 html {

@@ -65,7 +65,7 @@ export const Typography = {
     fontWeight: 500,
     lineHeight: '17px',
     letterSpacing: '0.75px',
-    textTransform: 'uppercase',
+    textTransform: 'capitalize',
   },
   caption: {
     fontSize: '0.875rem',
@@ -78,6 +78,6 @@ export const Typography = {
     fontWeight: 400,
     lineHeight: '20px',
     letterSpacing: '0.25px',
-    textTransform: 'uppercase',
+    textTransform: 'capitalize',
   },
 };

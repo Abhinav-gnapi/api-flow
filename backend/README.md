@@ -39,7 +39,7 @@ Service health endpoint:
 
 ### 2.3 CORS and Network
 
-- CORS origin is controlled by `FRONTEND_URL`
+- CORS origin is controlled by `FRONTEND_URLS` (or `FRONTEND_URL`)
 - JSON payload limit is `10mb`
 - Backend internal port is `5000`
 - In root compose, host maps `${BACKEND_PORT:-5001} -> container:5000`
@@ -80,7 +80,8 @@ Create `backend/.env` from `.env.example`.
 |---|---|---|---|
 | `PORT` | No | `index.js` | HTTP listen port (default: `5000`) |
 | `MONGODB_URI` | Yes | `index.js` | MongoDB connection URI |
-| `FRONTEND_URL` | No | `cors` middleware | Allowed browser origin for CORS |
+| `FRONTEND_URLS` | No | `cors` middleware | Comma-separated allowed browser origins for CORS |
+| `FRONTEND_URL` | No | `cors` middleware | Single allowed browser origin for CORS (backward compatible) |
 | `OPENAI_API_KEY` | Optional | `ai.controller.js` | Enables AI endpoints |
 | `GITHUB_TOKEN` | Optional | `bug.controller.js` | GitHub issue creation auth |
 | `GITHUB_OWNER` | Optional | `bug.controller.js` | GitHub org/user |
@@ -381,7 +382,7 @@ Access:
 
 ### Browser gets CORS error
 
-- set `FRONTEND_URL` to the exact frontend origin
+- set `FRONTEND_URLS` to include the exact frontend origin
 - restart backend after env changes
 
 ### AI endpoint fails
@@ -393,4 +394,3 @@ Access:
 
 - verify frontend Nginx proxy settings in `frontend/nginx.conf`
 - ensure backend container is named `backend` in compose network
-
