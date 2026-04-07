@@ -3,28 +3,14 @@ import react from '@vitejs/plugin-react';
 import { federation } from '@module-federation/vite';
 
 export default defineConfig({
-  // Keep root-based asset URLs so hosts can consume:
-  //   https://<frontend-domain>/remoteEntry.js
   base: '/',
   plugins: [
     react(),
     federation({
       name: 'legacyFrontend',
       filename: 'remoteEntry.js',
-      manifest: true,
       exposes: {
         './LegacyFrontend': './src/LegacyFrontend.jsx',
-      },
-      shared: {
-        react: {
-          singleton: true,
-        },
-        'react-dom': {
-          singleton: true,
-        },
-        'react-router-dom': {
-          singleton: true,
-        },
       },
     }),
   ],

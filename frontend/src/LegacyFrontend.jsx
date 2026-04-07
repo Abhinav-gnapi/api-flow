@@ -1,6 +1,7 @@
 import React from 'react';
 import { CssBaseline, ThemeProvider } from '@mui/material';
 import { AppShell } from './App';
+import './index.css';
 import { applyTypography } from './theme/applyTypography';
 import { muiTheme } from './theme/muiTheme';
 

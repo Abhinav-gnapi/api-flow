@@ -3,6 +3,7 @@ name: Docker Publish
 on:
   push:
     branches:
+      - main
       - apiFlow
   workflow_dispatch: {}
 
@@ -55,6 +56,7 @@ jobs:
           push: true
           tags: |
             ghcr.io/${{ steps.repo.outputs.name }}/apiflow-backend:${{ steps.version.outputs.version }}
+            ghcr.io/${{ steps.repo.outputs.name }}/apiflow-backend:sha-${{ github.sha }}
             ghcr.io/${{ steps.repo.outputs.name }}/apiflow-backend:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -70,6 +72,7 @@ jobs:
             VITE_API_BASE_URL=/api
           tags: |
             ghcr.io/${{ steps.repo.outputs.name }}/apiflow-frontend:${{ steps.version.outputs.version }}
+            ghcr.io/${{ steps.repo.outputs.name }}/apiflow-frontend:sha-${{ github.sha }}
             ghcr.io/${{ steps.repo.outputs.name }}/apiflow-frontend:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
