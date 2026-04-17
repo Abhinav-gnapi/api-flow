@@ -21,9 +21,33 @@ import { PreviousPageArrow } from '../theme/components/PreviousPageArrow';
 
 const METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
 const cmExtensions = [json()];
+const EDITOR_DRAFT_KEY_PREFIX = 'api-flow-tester:config-editor:';
+
+function getEditorDraftKey(configId) {
+  return `${EDITOR_DRAFT_KEY_PREFIX}${configId}`;
+}
+
+function readEditorDraft(configId) {
+  if (!configId || typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(getEditorDraftKey(configId));
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeEditorDraft(configId, draft) {
+  if (!configId || typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(getEditorDraftKey(configId), JSON.stringify(draft));
+  } catch {
+    // Ignore storage quota/unavailability issues.
+  }
+}
 
 function safeJson(val) {
-  if (!val) return '';
+  if (val === undefined || val === null) return '';
   if (typeof val === 'string') return val;
   return JSON.stringify(val, null, 2);
 }
@@ -35,6 +59,14 @@ function parseJson(str) {
   } catch {
     return null;
   }
+}
+
+function normalizeOptionalJsonSchema(value) {
+  if (value === null || value === undefined) return null;
+  if (typeof value === 'object') {
+    return Object.keys(value).length > 0 ? value : null;
+  }
+  return value;
 }
 
 function sleep(ms) {
@@ -93,18 +125,50 @@ export default function ConfigEditorPage() {
   const [url, setUrl] = useState('');
   const [headersStr, setHeadersStr] = useState('{}');
   const [queryStr, setQueryStr] = useState('{}');
+  const [sampleResponseStr, setSampleResponseStr] = useState('{}');
 
   const [payloadName, setPayloadName] = useState('');
   const [payloadBody, setPayloadBody] = useState('{}');
 
   const [dtoStr, setDtoStr] = useState('');
-  const [aiCount] = useState(10);
 
   const [lastResponse, setLastResponse] = useState(null);
 
   useEffect(() => {
     fetchAll();
   }, [id]);
+
+  useEffect(() => {
+    if (loading || !config) return;
+
+    writeEditorDraft(id, {
+      method,
+      url,
+      headersStr,
+      queryStr,
+      sampleResponseStr,
+      dtoStr,
+      selectedPayloadId: selectedPayload?._id || null,
+      editingPayloadId: selectedPayload?._id || null,
+      payloadNameDraft: payloadName,
+      payloadBodyDraft: payloadBody,
+      lastResponse,
+    });
+  }, [
+    id,
+    loading,
+    config,
+    method,
+    url,
+    headersStr,
+    queryStr,
+    sampleResponseStr,
+    dtoStr,
+    selectedPayload?._id,
+    payloadName,
+    payloadBody,
+    lastResponse,
+  ]);
 
   const fetchAll = async () => {
     try {
@@ -113,13 +177,32 @@ export default function ConfigEditorPage() {
         configsApi.getOne(id),
         payloadsApi.getByConfig(id),
       ]);
+      const draft = readEditorDraft(id);
+
       setConfig(cfg);
-      setMethod(cfg.method);
-      setUrl(cfg.url);
-      setHeadersStr(safeJson(cfg.headers) || '{}');
-      setQueryStr(safeJson(cfg.queryParams) || '{}');
+      setMethod(typeof draft?.method === 'string' ? draft.method : cfg.method);
+      setUrl(typeof draft?.url === 'string' ? draft.url : cfg.url);
+      setHeadersStr(typeof draft?.headersStr === 'string' ? draft.headersStr : safeJson(cfg.headers) || '{}');
+      setQueryStr(typeof draft?.queryStr === 'string' ? draft.queryStr : safeJson(cfg.queryParams) || '{}');
+      setSampleResponseStr(
+        typeof draft?.sampleResponseStr === 'string'
+          ? draft.sampleResponseStr
+          : safeJson(cfg.sampleResponseDto) || '{}'
+      );
+      setDtoStr(typeof draft?.dtoStr === 'string' ? draft.dtoStr : '');
       setPayloads(plds);
-      if (plds.length) selectPayload(plds[0]);
+
+      if (plds.length) {
+        const restoredPayload = draft?.selectedPayloadId
+          ? plds.find((p) => p._id === draft.selectedPayloadId)
+          : null;
+        selectPayload(restoredPayload || plds[0], { preserveDraft: true, draft });
+      } else {
+        setSelected(null);
+        setPayloadName('');
+        setPayloadBody('{}');
+        setLastResponse(null);
+      }
     } catch (e) {
       toast.error(e.message);
     } finally {
@@ -127,12 +210,28 @@ export default function ConfigEditorPage() {
     }
   };
 
-  const selectPayload = (p) => {
+  const selectPayload = (p, options = {}) => {
+    const hasDraftForPayload =
+      options.preserveDraft &&
+      options.draft &&
+      options.draft.editingPayloadId === p._id;
+
     setSelected(p);
-    setPayloadName(p.name);
-    setPayloadBody(safeJson(p.body) || '{}');
-    if (p.lastResult?.response) {
+    setPayloadName(
+      hasDraftForPayload && typeof options.draft.payloadNameDraft === 'string'
+        ? options.draft.payloadNameDraft
+        : p.name
+    );
+    setPayloadBody(
+      hasDraftForPayload && typeof options.draft.payloadBodyDraft === 'string'
+        ? options.draft.payloadBodyDraft
+        : safeJson(p.body) || '{}'
+    );
+
+    if (p.lastResult) {
       setLastResponse(p.lastResult);
+    } else if (hasDraftForPayload && options.draft.lastResponse) {
+      setLastResponse(options.draft.lastResponse);
     } else {
       setLastResponse(null);
     }
@@ -141,13 +240,22 @@ export default function ConfigEditorPage() {
   const handleSaveConfig = async () => {
     const headers = parseJson(headersStr);
     const queryParams = parseJson(queryStr);
+    const sampleResponseDto = parseJson(sampleResponseStr);
+    const normalizedSampleResponseDto = normalizeOptionalJsonSchema(sampleResponseDto);
     if (headers === null) return toast.error('Headers: invalid JSON');
     if (queryParams === null) return toast.error('Query Params: invalid JSON');
+    if (sampleResponseDto === null) return toast.error('Sample Response: invalid JSON');
     if (!url.trim()) return toast.error('URL is required');
 
     setSavingConfig(true);
     try {
-      const updated = await configsApi.update(id, { method, url, headers, queryParams });
+      const updated = await configsApi.update(id, { 
+        method, 
+        url, 
+        headers, 
+        queryParams,
+        sampleResponseDto: normalizedSampleResponseDto,
+      });
       setConfig(updated);
       toast.success('Config saved');
     } catch (e) {
@@ -209,17 +317,24 @@ export default function ConfigEditorPage() {
   const handleRunOne = async () => {
     if (!selectedPayload) return toast.error('Select a payload first');
     const body = parseJson(payloadBody);
+    const sampleResponseDto = parseJson(sampleResponseStr);
+    const normalizedSampleResponseDto = normalizeOptionalJsonSchema(sampleResponseDto);
     if (body === null) return toast.error('Fix JSON before running');
+    if (sampleResponseDto === null) return toast.error('Sample Response: invalid JSON');
     await payloadsApi.update(selectedPayload._id, { name: payloadName, body }).catch(() => {});
 
     setRunning(true);
     try {
-      const result = await runnerApi.runOne(id, selectedPayload._id);
+      const result = await runnerApi.runOne(id, selectedPayload._id, normalizedSampleResponseDto);
       setLastResponse(result);
       const updatedPayload = { ...selectedPayload, lastResult: { ...result, runAt: new Date() } };
       setSelected(updatedPayload);
       setPayloads((prev) => prev.map((p) => (p._id === updatedPayload._id ? updatedPayload : p)));
-      toast.success(`${result.statusCode} · ${result.latencyMs}ms`);
+      if (result.passed) {
+        toast.success(`${result.statusCode} · ${result.latencyMs}ms`);
+      } else {
+        toast.error(`Failed · HTTP ${result.statusCode} · ${result.latencyMs}ms`);
+      }
     } catch (e) {
       toast.error(e.message);
     } finally {
@@ -229,9 +344,12 @@ export default function ConfigEditorPage() {
 
   const handleGenerateReport = async () => {
     if (!payloads.length) return toast.error('No payloads to run');
+    const sampleResponseDto = parseJson(sampleResponseStr);
+    const normalizedSampleResponseDto = normalizeOptionalJsonSchema(sampleResponseDto);
+    if (sampleResponseDto === null) return toast.error('Sample Response: invalid JSON');
     setRunningAll(true);
     try {
-      const { report, summary } = await runnerApi.runAll(id, 300);
+      const { report, summary } = await runnerApi.runAll(id, 300, normalizedSampleResponseDto);
       toast.success(`Done! ${summary.passed}/${summary.total} passed`);
       const plds = await payloadsApi.getByConfig(id);
       setPayloads(plds);
@@ -249,6 +367,9 @@ export default function ConfigEditorPage() {
 
   const handleRunAllWithDelay = async () => {
     if (!payloads.length) return toast.error('No payloads to run');
+    const sampleResponseDto = parseJson(sampleResponseStr);
+    const normalizedSampleResponseDto = normalizeOptionalJsonSchema(sampleResponseDto);
+    if (sampleResponseDto === null) return toast.error('Sample Response: invalid JSON');
 
     setRunningAll(true);
     try {
@@ -257,16 +378,15 @@ export default function ConfigEditorPage() {
 
       for (let i = 0; i < payloads.length; i += 1) {
         const payload = payloads[i];
-        const result = await runnerApi.runOne(id, payload._id);
+        const result = await runnerApi.runOne(id, payload._id, normalizedSampleResponseDto);
         if (result.passed) passed += 1;
 
         const updatedPayload = { ...payload, lastResult: { ...result, runAt: new Date() } };
         setPayloads((prev) => prev.map((p) => (p._id === updatedPayload._id ? updatedPayload : p)));
-
-        if (selectedPayload?._id === updatedPayload._id) {
-          setSelected(updatedPayload);
-          setLastResponse(result);
-        }
+        setSelected(updatedPayload);
+        setPayloadName(updatedPayload.name);
+        setPayloadBody(safeJson(updatedPayload.body) || '{}');
+        setLastResponse(result);
 
         if (i < payloads.length - 1) await sleep(runDelayMs);
       }
@@ -286,7 +406,7 @@ export default function ConfigEditorPage() {
 
     setGeneratingAI(true);
     try {
-      const res = await aiApi.generateEdgeCases({ configId: id, dto, method, url, count: aiCount });
+      const res = await aiApi.generateEdgeCases({ configId: id, dto, method, url, count: 'max' });
       const plds = await payloadsApi.getByConfig(id);
       setPayloads(plds);
       if (plds.length) {
@@ -411,7 +531,7 @@ export default function ConfigEditorPage() {
           flex: 1,
           minHeight: 0,
           display: 'grid',
-          gridTemplateColumns: { xs: '1fr', md: '300px 1fr', lg: '325px 1fr 380px' },
+          gridTemplateColumns: { xs: '1fr', md: '300px 1fr', lg: '325px 1fr 450px' },
         }}
       >
         <Box
@@ -634,6 +754,23 @@ export default function ConfigEditorPage() {
                 <CodeEditor value={queryStr} onChange={setQueryStr} height="80px" />
               </Box>
             </Box>
+
+            <Box sx={{ mt: 1.5 }}>
+              <Typography variant="caption" color="text.secondary">
+                Sample Response DTO (JSON)
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.25, mb: 0.75 }}>
+                Responses will be validated against this schema. Leave empty to skip validation.
+              </Typography>
+              <Box sx={{ mt: 0.5 }}>
+                <CodeEditor 
+                  value={sampleResponseStr} 
+                  onChange={setSampleResponseStr} 
+                  height="100px"
+                  placeholder='{ "id": 1, "name": "string", "data": {} }'
+                />
+              </Box>
+            </Box>
           </Box>
 
           <Box
@@ -717,9 +854,30 @@ export default function ConfigEditorPage() {
                   HTTP {lastResponse.statusCode} {lastResponse.statusText} · {lastResponse.latencyMs}ms
                 </Typography>
               </Box>
+              {lastResponse.validationErrors && lastResponse.validationErrors.length > 0 && (
+                <Box
+                  sx={{
+                    p: 1,
+                    bgcolor: theme.chip?.approvalStatus?.rejected ? theme.chip.approvalStatus.rejected + '15' : '#FFEBEE',
+                    border: `1px solid ${theme.palette.error.main}`,
+                    borderRadius: 1,
+                  }}
+                >
+                  <Typography variant="caption" sx={{ fontWeight: 600, color: theme.palette.error.main, display: 'block', mb: 0.75 }}>
+                    Validation Errors:
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                    {lastResponse.validationErrors.map((error, idx) => (
+                      <Typography key={idx} variant="caption" sx={{ color: theme.palette.error.main, fontFamily: 'monospace' }}>
+                        • {error}
+                      </Typography>
+                    ))}
+                  </Box>
+                </Box>
+              )}
               <CodeEditor
-                value={safeJson(lastResponse.response || lastResponse.error || '')}
-                height="calc(100vh - 220px)"
+                value={safeJson(lastResponse.response ?? lastResponse.error ?? '')}
+                height={lastResponse.validationErrors && lastResponse.validationErrors.length > 0 ? 'calc(100vh - 320px)' : 'calc(100vh - 220px)'}
                 editable={false}
               />
             </Box>

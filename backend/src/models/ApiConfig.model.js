@@ -12,6 +12,7 @@ const apiConfigSchema = new mongoose.Schema(
     url: { type: String, required: true },
     headers: { type: mongoose.Schema.Types.Mixed, default: {} },
     queryParams: { type: mongoose.Schema.Types.Mixed, default: {} },
+    sampleResponseDto: { type: mongoose.Schema.Types.Mixed, default: null },
     lastRun: { type: Date, default: null },
   },
   { timestamps: true }

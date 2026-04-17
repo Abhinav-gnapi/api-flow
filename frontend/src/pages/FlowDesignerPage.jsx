@@ -15,8 +15,8 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import toast from 'react-hot-toast';
-import { Plus, Play, Zap, Save, Trash2, X, ChevronRight, KeyRound } from 'lucide-react';
-import { flowsApi, aiApi } from '../services/api';
+import { Plus, Play, Zap, Save, Trash2, X, ChevronRight, KeyRound, Clock3 } from 'lucide-react';
+import { flowsApi, aiApi, configsApi } from '../services/api';
 import { Button, Spinner, Modal, Input, Select, EmptyState } from '../components/ui';
 import { useInlinePageStyles } from '../theme/useInlinePageStyles';
 import { PreviousPageArrow } from '../theme/components/PreviousPageArrow';
@@ -132,6 +132,46 @@ const FLOW_DESIGNER_PAGE_STYLES = String.raw`.page {
 
 .toolbarLeft { display: flex; align-items: center; gap: 10px; }
 .toolbarRight { display: flex; align-items: center; gap: 8px; }
+
+.addStepMenuWrap {
+  position: relative;
+}
+
+.addStepMenuDropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 210px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  z-index: 50;
+}
+
+.addStepMenuItem {
+  width: 100%;
+  border: none;
+  background: transparent;
+  text-align: left;
+  padding: 9px 12px;
+  font-family: var(--font-sans);
+  font-size: var(--type-body2-font-size);
+  font-weight: var(--type-body2-font-weight);
+  line-height: var(--type-body2-line-height);
+  letter-spacing: var(--type-body2-letter-spacing);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.addStepMenuItem + .addStepMenuItem {
+  border-top: 1px solid var(--border);
+}
+
+.addStepMenuItem:hover {
+  background: var(--bg-hover);
+}
 
 .backBtn {
   width: 30px; height: 30px; border: none;
@@ -454,7 +494,7 @@ const FLOW_DESIGNER_PAGE_STYLES = String.raw`.page {
 
 .stepEditorHeader {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 13px 14px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+  padding: 18.5px 14px; border-bottom: 1px solid var(--border); flex-shrink: 0;
 }
 .stepEditorTitle {
   font-size: var(--type-subtitle2-font-size);
@@ -502,6 +542,128 @@ const FLOW_DESIGNER_PAGE_STYLES = String.raw`.page {
   background: var(--bg-input); width: 100%;
 }
 .editorSelect:focus { outline: none; border-color: var(--border-focus); }
+
+.importModalBody {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.importSearchWrap {
+  margin-bottom: 4px;
+}
+
+.importGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 12px;
+  max-height: 62vh;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.importCard {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  padding: 12px 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: box-shadow 0.15s, border-color 0.15s, transform 0.12s;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.importCard:hover {
+  box-shadow: var(--shadow-md);
+  border-color: #d1d5db;
+  transform: translateY(-1px);
+}
+
+.importCardTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.importCardTitle {
+  font-size: var(--type-subtitle1-font-size);
+  font-weight: 600;
+  line-height: var(--type-subtitle1-line-height);
+  letter-spacing: var(--type-subtitle1-letter-spacing);
+  color: var(--text-primary);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.importCardPickTag {
+  font-size: var(--type-overline-font-size);
+  line-height: var(--type-overline-line-height);
+  letter-spacing: var(--type-overline-letter-spacing);
+  color: var(--purple-600);
+  background: var(--purple-50);
+  border: 1px solid var(--purple-100);
+  border-radius: var(--radius-full);
+  padding: 2px 8px;
+  flex-shrink: 0;
+}
+
+.importCardMeta {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+}
+
+.importCardMethod {
+  font-size: var(--type-subtitle2-font-size);
+  font-weight: 700;
+  line-height: var(--type-subtitle2-line-height);
+  letter-spacing: var(--type-subtitle2-letter-spacing);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.importCardUrl {
+  font-size: var(--type-body2-font-size);
+  line-height: var(--type-body2-line-height);
+  letter-spacing: var(--type-body2-letter-spacing);
+  color: var(--text-muted);
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.importCardUpdated {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--type-caption-font-size);
+  line-height: var(--type-caption-line-height);
+  letter-spacing: var(--type-caption-letter-spacing);
+  color: var(--text-muted);
+}
+
+.importEmpty {
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  color: var(--text-muted);
+  font-size: var(--type-caption-font-size);
+  line-height: var(--type-caption-line-height);
+  letter-spacing: var(--type-caption-letter-spacing);
+}
+
+@media (max-width: 900px) {
+  .importGrid {
+    grid-template-columns: 1fr;
+  }
+}
 
 .editorTextarea {
   padding: 7px 10px;
@@ -675,6 +837,13 @@ function getStatusLabel(code, statusText) {
   return DEFAULT_STATUS_TEXT[code] || 'Unknown';
 }
 
+function formatUpdatedAt(value) {
+  if (!value) return 'Updated: -';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return 'Updated: -';
+  return `Updated: ${parsed.toLocaleString()}`;
+}
+
 
 function StepNode({ id, data, selected }) {
   // Prefer step-level Authorization, otherwise fall back to flow-level Authorization.
@@ -766,6 +935,7 @@ function FlowDesignerInner() {
   const { getViewport, project } = useReactFlow();
 
   const [flows, setFlows]           = useState([]);
+  const [dashboardConfigs, setDashboardConfigs] = useState([]);
   const [activeFlow, setActiveFlow] = useState(null);
   const [loading, setLoading]       = useState(true);
   const [saving, setSaving]         = useState(false);
@@ -784,6 +954,9 @@ function FlowDesignerInner() {
   // New flow modal
   const [showNewFlow, setShowNewFlow]   = useState(false);
   const [newFlowName, setNewFlowName]   = useState('');
+  const [showAddStepMenu, setShowAddStepMenu] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importSearch, setImportSearch] = useState('');
 
   // Flow-level auth template (applies to all steps)
   // Example: "Bearer {{token}}" where token is extracted from the login step.
@@ -791,7 +964,10 @@ function FlowDesignerInner() {
   const [showFlowAuth, setShowFlowAuth]         = useState(false);
   const [flowAuthDraft, setFlowAuthDraft]       = useState('');
 
-  useEffect(() => { fetchFlows(); }, []);
+  useEffect(() => {
+    fetchFlows();
+    fetchDashboardConfigs();
+  }, []);
 
   useEffect(() => {
     if (id && flows.length) {
@@ -809,6 +985,15 @@ function FlowDesignerInner() {
       toast.error(e.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchDashboardConfigs = async () => {
+    try {
+      const data = await configsApi.getAll();
+      setDashboardConfigs(data);
+    } catch (e) {
+      toast.error(`Could not load dashboard API configs: ${e.message}`);
     }
   };
 
@@ -840,6 +1025,7 @@ function FlowDesignerInner() {
       position: step.position || { x: 100, y: 100 },
       data: {
         label: step.name,
+        configId: step.configId ? String(step.configId) : null,
         method: step.method || 'GET',
         url: step.url || '',
         body: step.body || {},
@@ -944,30 +1130,27 @@ function FlowDesignerInner() {
     );
   };
 
+  const getNewStepPosition = useCallback(() => {
+    const canvasEl = document.querySelector('.react-flow__renderer');
+    const canvasW  = canvasEl?.clientWidth  ?? 800;
+    const canvasH  = canvasEl?.clientHeight ?? 500;
+    const center   = project({ x: canvasW / 2, y: canvasH / 2 });
+    const jitter   = () => (Math.random() - 0.5) * 60;
+
+    return { x: center.x + jitter(), y: center.y + jitter() };
+  }, [project]);
+
   /* add step at current viewport center */
   const addStep = useCallback(() => {
     const stepId = `step-${stepIdCounter++}`;
 
-    // Get the canvas element to find its dimensions
-    const canvasEl = document.querySelector('.react-flow__renderer');
-    const canvasW  = canvasEl?.clientWidth  ?? 800;
-    const canvasH  = canvasEl?.clientHeight ?? 500;
-
-    // Convert screen center to flow coordinates
-    const center = project({
-      x: canvasW / 2,
-      y: canvasH / 2,
-    });
-
-    // Slight random jitter so stacked nodes don't perfectly overlap
-    const jitter = () => (Math.random() - 0.5) * 60;
-
     const newNode = {
       id: stepId,
       type: 'step',
-      position: { x: center.x + jitter(), y: center.y + jitter() },
+      position: getNewStepPosition(),
       data: makeNodeData({
         label: `Step ${nodes.length + 1}`,
+        configId: null,
         method: 'GET',
         url: '',
         body: {},
@@ -976,8 +1159,40 @@ function FlowDesignerInner() {
         injectVariables: {},
       }),
     };
+
     setNodes((nds) => [...nds, newNode]);
-  }, [nodes.length, project, makeNodeData]);
+  }, [nodes.length, getNewStepPosition, makeNodeData]);
+
+  const handleImportConfigAsNode = useCallback((cfg) => {
+    if (!cfg) return;
+
+    const stepId = `step-${stepIdCounter++}`;
+    const importedHeaders =
+      cfg.headers && typeof cfg.headers === 'object' && !Array.isArray(cfg.headers)
+        ? cfg.headers
+        : {};
+
+    const newNode = {
+      id: stepId,
+      type: 'step',
+      position: getNewStepPosition(),
+      data: makeNodeData({
+        label: cfg.name || `Step ${nodes.length + 1}`,
+        configId: cfg._id || null,
+        method: cfg.method || 'GET',
+        url: cfg.url || '',
+        body: {},
+        headers: importedHeaders,
+        extractVariables: {},
+        injectVariables: {},
+      }),
+    };
+
+    setNodes((nds) => [...nds, newNode]);
+    setShowImportModal(false);
+    setImportSearch('');
+    toast.success(`Imported "${cfg.name || 'API config'}" as a new step`);
+  }, [getNewStepPosition, makeNodeData, nodes.length]);
 
   const onConnect = useCallback(
     (params) => {
@@ -1006,6 +1221,7 @@ function FlowDesignerInner() {
     setEditingStep(node);
     setStepForm({
       label: node.data.label,
+      configId: node.data.configId || '',
       method: node.data.method,
       url: node.data.url,
       headers: JSON.stringify(node.data.headers || {}, null, 2),
@@ -1027,6 +1243,7 @@ function FlowDesignerInner() {
               data: {
                 ...n.data,
                 label:            stepForm.label,
+                configId:         stepForm.configId || null,
                 method:           stepForm.method,
                 url:              stepForm.url,
                 headers:          tryParse(stepForm.headers),
@@ -1042,6 +1259,17 @@ function FlowDesignerInner() {
     toast.success('Step updated');
   };
 
+  const importSearchTerm = importSearch.trim().toLowerCase();
+  const importableConfigs = dashboardConfigs
+    .filter((cfg) => {
+      if (!importSearchTerm) return true;
+
+      return (
+        String(cfg.name || '').toLowerCase().includes(importSearchTerm)
+        || String(cfg.url || '').toLowerCase().includes(importSearchTerm)
+      );
+    });
+
   const handleSaveFlow = async () => {
     if (!activeFlow) return;
     setSaving(true);
@@ -1051,6 +1279,7 @@ function FlowDesignerInner() {
         return {
           id: n.id,
           name: n.data.label,
+          configId: n.data.configId || null,
           method: n.data.method,
           url: n.data.url,
           headers: n.data.headers || {},
@@ -1176,7 +1405,45 @@ function FlowDesignerInner() {
           <div className={styles.toolbarRight}>
             {activeFlow && (
               <>
-                <Button variant="outline" size="sm" onClick={addStep}><Plus size={13} /> Add Step</Button>
+                <div
+                  className={styles.addStepMenuWrap}
+                  tabIndex={0}
+                  onBlur={(e) => {
+                    if (!e.currentTarget.contains(e.relatedTarget)) {
+                      setShowAddStepMenu(false);
+                    }
+                  }}
+                >
+                  <Button variant="outline" size="sm" onClick={() => setShowAddStepMenu((prev) => !prev)}>
+                    <Plus size={13} /> Add Step
+                  </Button>
+                  {showAddStepMenu && (
+                    <div className={styles.addStepMenuDropdown}>
+                      <button
+                        type="button"
+                        className={styles.addStepMenuItem}
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => {
+                          addStep();
+                          setShowAddStepMenu(false);
+                        }}
+                      >
+                        Add Blank Step
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.addStepMenuItem}
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => {
+                          setShowAddStepMenu(false);
+                          setShowImportModal(true);
+                        }}
+                      >
+                        Import from Dashboard
+                      </button>
+                    </div>
+                  )}
+                </div>
                 <Button
                   variant="outline"
                   size="sm"
@@ -1357,7 +1624,12 @@ function FlowDesignerInner() {
               </div>
               <div className={styles.editorField} style={{ flex: 1 }}>
                 <label className={styles.editorLabel}>URL</label>
-                <input className={styles.editorInput} value={stepForm.url || ''} onChange={(e) => setStepForm((p) => ({ ...p, url: e.target.value }))} placeholder="https://..." />
+                <input
+                  className={styles.editorInput}
+                  value={stepForm.url || ''}
+                  onChange={(e) => setStepForm((p) => ({ ...p, configId: '', url: e.target.value }))}
+                  placeholder="https://..."
+                />
               </div>
             </div>
             <div className={styles.editorField}>
@@ -1432,6 +1704,60 @@ function FlowDesignerInner() {
               Apply
             </Button>
           </div>
+        </div>
+      </Modal>
+
+      {/* Import from dashboard modal */}
+      <Modal
+        open={showImportModal}
+        onClose={() => {
+          setShowImportModal(false);
+          setImportSearch('');
+        }}
+        title="Import from Dashboard"
+        width={1250}
+      >
+        <div className={styles.importModalBody}>
+          <div className={styles.importSearchWrap}>
+            <Input
+              placeholder="Search by API name or URL"
+              value={importSearch}
+              onChange={(e) => setImportSearch(e.target.value)}
+            />
+          </div>
+
+          {importableConfigs.length === 0 ? (
+            <div className={styles.importEmpty}>No API configs found for this search.</div>
+          ) : (
+            <div className={styles.importGrid}>
+              {importableConfigs.map((cfg) => (
+                <button
+                  key={cfg._id}
+                  type="button"
+                  className={styles.importCard}
+                  onClick={() => handleImportConfigAsNode(cfg)}
+                >
+                  <div className={styles.importCardTop}>
+                    <span className={styles.importCardTitle}>{cfg.name || 'Untitled API'}</span>
+                    {/* <span className={styles.importCardPickTag}>Import</span> */}
+                  </div>
+                  <div className={styles.importCardMeta}>
+                    <span
+                      className={styles.importCardMethod}
+                      style={{ color: METHOD_COLORS[cfg.method] || '#6b7280' }}
+                    >
+                      {cfg.method || 'GET'}
+                    </span>
+                    <span className={styles.importCardUrl}>{cfg.url}</span>
+                  </div>
+                  <div className={styles.importCardUpdated}>
+                    <Clock3 size={11} />
+                    {formatUpdatedAt(cfg.updatedAt)}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </Modal>
 

@@ -81,7 +81,7 @@ cp .env.example .env
 PORT=5000
 MONGODB_URI=mongodb://localhost:27017/api-flow-tester
 GEMINI_API_KEY=AIza...                 # Get from aistudio.google.com
-FRONTEND_URLS=http://localhost:5173,http://localhost:4200
+FRONTEND_URLS=http://localhost:5174,http://localhost:4200
 ```
 
 **Frontend** — copy and fill in:
@@ -102,7 +102,7 @@ npm run dev
 ```
 
 This starts both:
-- Frontend: http://localhost:5173
+- Frontend: http://localhost:5174
 - Backend:  http://localhost:5000
 
 ---

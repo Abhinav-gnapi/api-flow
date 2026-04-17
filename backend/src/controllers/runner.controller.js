@@ -2,11 +2,17 @@ const axios = require('axios');
 const ApiConfig = require('../models/ApiConfig.model');
 const Payload = require('../models/Payload.model');
 const Report = require('../models/Report.model');
+const { validateResponseSchema } = require('../utils/responseValidator');
+
+const resolveSampleResponseDto = (requestBody, configSampleResponseDto) => {
+  const hasOverride = Object.prototype.hasOwnProperty.call(requestBody || {}, 'sampleResponseDto');
+  return hasOverride ? requestBody.sampleResponseDto : configSampleResponseDto;
+};
 
 /**
  * Execute a single payload against the API config
  */
-const executePayload = async (config, payload) => {
+const executePayload = async (config, payload, sampleResponseDto = null) => {
   const start = Date.now();
   try {
     const response = await axios({
@@ -20,7 +26,17 @@ const executePayload = async (config, payload) => {
     });
 
     const latencyMs = Date.now() - start;
-    const passed = response.status >= 200 && response.status < 300;
+    const statusOk = response.status >= 200 && response.status < 300;
+
+    // If sample response is provided, validate the response against it
+    let passed = statusOk;
+    let validationErrors = [];
+
+    if (sampleResponseDto && statusOk) {
+      const validation = validateResponseSchema(response.data, sampleResponseDto);
+      passed = validation.passed;
+      validationErrors = validation.errors;
+    }
 
     return {
       payloadId: payload._id,
@@ -31,6 +47,7 @@ const executePayload = async (config, payload) => {
       latencyMs,
       passed,
       response: response.data,
+      validationErrors: validationErrors.length > 0 ? validationErrors : undefined,
       edgeCaseType: payload.edgeCaseType,
     };
   } catch (err) {
@@ -61,7 +78,8 @@ exports.runOne = async (req, res, next) => {
     const payload = await Payload.findById(payloadId);
     if (!payload) return res.status(404).json({ error: 'Payload not found' });
 
-    const result = await executePayload(config, payload);
+    const sampleResponseDto = resolveSampleResponseDto(req.body, config.sampleResponseDto);
+    const result = await executePayload(config, payload, sampleResponseDto);
 
     // Update lastResult on payload
     await Payload.findByIdAndUpdate(payloadId, {
@@ -85,10 +103,11 @@ exports.runAll = async (req, res, next) => {
     const payloads = await Payload.find({ configId });
     if (!payloads.length) return res.status(400).json({ error: 'No payloads found' });
 
+    const sampleResponseDto = resolveSampleResponseDto(req.body, config.sampleResponseDto);
     const results = [];
 
     for (const payload of payloads) {
-      const result = await executePayload(config, payload);
+      const result = await executePayload(config, payload, sampleResponseDto);
       results.push(result);
 
       // Update lastResult on each payload

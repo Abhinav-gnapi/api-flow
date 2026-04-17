@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Trash2, Bug, FileDown, Github, ExternalLink,
   Loader2, CheckSquare, Square, Download, FileText,
@@ -9,6 +9,7 @@ import {
   createGitHubBugs, createJiraBugs,
   getBugConfig, downloadRowAsJson,
 } from '../services/reportService';
+import { Input, Select } from '../components/ui';
 
 const DELETE_CONFIRM_TOAST = {
   box: {
@@ -475,6 +476,10 @@ export default function ExecutionResults() {
   const [selected,  setSelected]  = useState(new Set());
   const [showBug,   setShowBug]   = useState(false);
   const [page,      setPage]      = useState(1);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [methodFilter, setMethodFilter] = useState('ALL');
+  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [sortBy, setSortBy] = useState('run_desc');
 
   useEffect(() => {
     fetchReports()
@@ -486,14 +491,62 @@ export default function ExecutionResults() {
       .catch(() => setBugConfig({ github: false, jira: false }));
   }, []);
 
-  const totalPages = Math.max(1, Math.ceil(reports.length / PAGE_SIZE));
+  const methodOptions = ['ALL', ...Array.from(new Set(
+    reports
+      .map((r) => String(r.method || '').toUpperCase())
+      .filter(Boolean)
+  )).sort()];
+
+  const visibleReports = (() => {
+    const q = searchTerm.trim().toLowerCase();
+    const filtered = reports.filter((report) => {
+      const method = String(report.method || '').toUpperCase();
+      const searchable = [report.configName, report.method, report.url, report._id]
+        .map((value) => String(value || '').toLowerCase())
+        .join(' ');
+      const isPassing = (report.failed ?? 0) === 0;
+      const matchesSearch = !q || searchable.includes(q);
+      const matchesMethod = methodFilter === 'ALL' || method === methodFilter;
+      const matchesStatus = statusFilter === 'ALL'
+        || (statusFilter === 'PASS' ? isPassing : !isPassing);
+
+      return matchesSearch && matchesMethod && matchesStatus;
+    });
+
+    return [...filtered].sort((a, b) => {
+      const aRunTs = new Date(a.runAt || 0).getTime();
+      const bRunTs = new Date(b.runAt || 0).getTime();
+      switch (sortBy) {
+        case 'run_asc':
+          return aRunTs - bRunTs;
+        case 'name_asc':
+          return String(a.configName || '').localeCompare(String(b.configName || ''));
+        case 'name_desc':
+          return String(b.configName || '').localeCompare(String(a.configName || ''));
+        case 'run_desc':
+        default:
+          return bRunTs - aRunTs;
+      }
+    });
+  })();
+
+  const hasActiveFilters = Boolean(searchTerm.trim())
+    || methodFilter !== 'ALL'
+    || statusFilter !== 'ALL'
+    || sortBy !== 'run_desc';
+
+  const totalPages = Math.max(1, Math.ceil(visibleReports.length / PAGE_SIZE));
   const pageStartIndex = (page - 1) * PAGE_SIZE;
-  const pagedReports = reports.slice(pageStartIndex, pageStartIndex + PAGE_SIZE);
-  const pageEndIndex = Math.min(pageStartIndex + PAGE_SIZE, reports.length);
+  const pagedReports = visibleReports.slice(pageStartIndex, pageStartIndex + PAGE_SIZE);
+  const pageEndIndex = Math.min(pageStartIndex + PAGE_SIZE, visibleReports.length);
 
   useEffect(() => {
     if (page > totalPages) setPage(totalPages);
   }, [page, totalPages]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm, methodFilter, statusFilter, sortBy]);
 
   const toggleRow = (id) =>
     setSelected(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
@@ -630,31 +683,77 @@ export default function ExecutionResults() {
                   color: 'var(--text-muted)',
                 }}
               >
-                ({reports.length} runs)
+                ({visibleReports.length}{hasActiveFilters ? ` of ${reports.length}` : ''} runs)
               </span>
             )}
           </div>
-          {selected.size > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 'var(--type-caption-font-size)', color: 'var(--text-secondary)', marginRight: 4 }}>{selected.size} selected</span>
-              <button onClick={handleBulkPDF}
-                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', color: 'var(--text-primary)', fontSize: 'var(--type-caption-font-size)', fontWeight: 600, cursor: 'pointer' }}
-                onMouseEnter={e => e.currentTarget.style.background = '#f9fafb'}
-                onMouseLeave={e => e.currentTarget.style.background = '#fff'}>
-                <Download size={13} /> Download PDF{selected.size > 1 ? 's' : ''}
-              </button>
-              {/* <button onClick={() => setShowBug(true)}
-                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 8, border: '1px solid #fca5a5', background: '#fff', color: '#ef4444', fontSize: 'var(--type-caption-font-size)', fontWeight: 600, cursor: 'pointer' }}
-                onMouseEnter={e => e.currentTarget.style.background = '#fff1f1'}
-                onMouseLeave={e => e.currentTarget.style.background = '#fff'}>
-                <Bug size={13} /> Report Bug
-              </button> */}
-              <button onClick={() => setSelected(new Set())}
-                style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', color: 'var(--text-muted)', fontSize: 'var(--type-caption-font-size)', cursor: 'pointer' }}>
-                Clear
-              </button>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, flexWrap: 'wrap', marginLeft: 16 }}>
+            <div style={{ width: 'min(280px, 38vw)', minWidth: 170 }}>
+              <Input
+                placeholder="Search config, URL, method"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
-          )}
+            <div style={{ width: 130 }}>
+              <Select value={methodFilter} onChange={(e) => setMethodFilter(e.target.value)}>
+                {methodOptions.map((method) => (
+                  <option key={method} value={method}>
+                    {method === 'ALL' ? 'All Methods' : method}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            <div style={{ width: 130 }}>
+              <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+                <option value="ALL">All Results</option>
+                <option value="PASS">Passed Runs</option>
+                <option value="FAIL">Failed Runs</option>
+              </Select>
+            </div>
+            <div style={{ width: 145 }}>
+              <Select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+                <option value="run_desc">Newest First</option>
+                <option value="run_asc">Oldest First</option>
+                <option value="name_asc">Name A-Z</option>
+                <option value="name_desc">Name Z-A</option>
+              </Select>
+            </div>
+            {hasActiveFilters && (
+              <button
+                onClick={() => {
+                  setSearchTerm('');
+                  setMethodFilter('ALL');
+                  setStatusFilter('ALL');
+                  setSortBy('run_desc');
+                }}
+                style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', color: 'var(--text-secondary)', fontSize: 'var(--type-caption-font-size)', cursor: 'pointer' }}
+              >
+                Clear Filters
+              </button>
+            )}
+            {selected.size > 0 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 'var(--type-caption-font-size)', color: 'var(--text-secondary)', marginRight: 4 }}>{selected.size} selected</span>
+                <button onClick={handleBulkPDF}
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', color: 'var(--text-primary)', fontSize: 'var(--type-caption-font-size)', fontWeight: 600, cursor: 'pointer' }}
+                  onMouseEnter={e => e.currentTarget.style.background = '#f9fafb'}
+                  onMouseLeave={e => e.currentTarget.style.background = '#fff'}>
+                  <Download size={13} /> Download PDF{selected.size > 1 ? 's' : ''}
+                </button>
+                {/* <button onClick={() => setShowBug(true)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 8, border: '1px solid #fca5a5', background: '#fff', color: '#ef4444', fontSize: 'var(--type-caption-font-size)', fontWeight: 600, cursor: 'pointer' }}
+                  onMouseEnter={e => e.currentTarget.style.background = '#fff1f1'}
+                  onMouseLeave={e => e.currentTarget.style.background = '#fff'}>
+                  <Bug size={13} /> Report Bug
+                </button> */}
+                <button onClick={() => setSelected(new Set())}
+                  style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', color: 'var(--text-muted)', fontSize: 'var(--type-caption-font-size)', cursor: 'pointer' }}>
+                  Clear
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {loading && <div style={{ padding: 48, textAlign: 'center', color: 'var(--text-muted)', fontSize: 'var(--type-subtitle2-font-size)' }}>Loading reports…</div>}
@@ -662,8 +761,13 @@ export default function ExecutionResults() {
         {!loading && !error && reports.length === 0 && (
           <div style={{ padding: 48, textAlign: 'center', color: 'var(--text-muted)', fontSize: 'var(--type-subtitle2-font-size)' }}>No reports yet. Run an API test first.</div>
         )}
+        {!loading && !error && reports.length > 0 && visibleReports.length === 0 && (
+          <div style={{ padding: 48, textAlign: 'center', color: 'var(--text-muted)', fontSize: 'var(--type-subtitle2-font-size)' }}>
+            No matching runs found. Try adjusting your search or filters.
+          </div>
+        )}
 
-        {!loading && !error && reports.length > 0 && (
+        {!loading && !error && visibleReports.length > 0 && (
           <div style={{ width: '100%', overflowX: 'auto' }}>
           <table style={{ width: '100%', minWidth: 1120, borderCollapse: 'collapse', tableLayout: 'fixed' }}>
             <thead>
@@ -768,7 +872,7 @@ export default function ExecutionResults() {
           </table>
           </div>
         )}
-        {!loading && !error && reports.length > 0 && (
+        {!loading && !error && visibleReports.length > 0 && (
           <div
             style={{
               display: 'flex',
@@ -786,7 +890,7 @@ export default function ExecutionResults() {
                 color: 'var(--text-secondary)',
               }}
             >
-              {`${pageStartIndex + 1}-${pageEndIndex} of ${reports.length}`}
+              {`${pageStartIndex + 1}-${pageEndIndex} of ${visibleReports.length}`}
             </span>
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
@@ -847,5 +951,3 @@ export default function ExecutionResults() {
     </div>
   );
 }
-
-

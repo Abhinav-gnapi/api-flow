@@ -34,8 +34,10 @@ export const payloadsApi = {
 
 // ── Runner ───────────────────────────────────────────────────
 export const runnerApi = {
-  runOne: (configId, payloadId)       => api.post('/runner/run-one', { configId, payloadId }),
-  runAll: (configId, delayMs = 300)   => api.post('/runner/run-all', { configId, delayMs }),
+  runOne: (configId, payloadId, sampleResponseDto) =>
+    api.post('/runner/run-one', { configId, payloadId, sampleResponseDto }),
+  runAll: (configId, delayMs = 300, sampleResponseDto) =>
+    api.post('/runner/run-all', { configId, delayMs, sampleResponseDto }),
 };
 
 // ── Reports ──────────────────────────────────────────────────

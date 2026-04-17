@@ -9,10 +9,10 @@ services:
       - mongo_data:/data/db
 
   backend:
-    build:
-      context: .
-      dockerfile: backend/Dockerfile
-    image: apiflow-backend:local
+    # build:
+    #   context: .
+    #   dockerfile: backend/Dockerfile
+    image: ghcr.io/gnapi-tech/api-flow/apiflow-backend:0.0.19
     pull_policy: never
     container_name: api-flow-backend
     restart: unless-stopped
@@ -22,25 +22,25 @@ services:
       NODE_ENV: production
       PORT: 5000
       MONGODB_URI: ${MONGODB_URI:-mongodb://mongodb:27017/api-flow-tester}
-      FRONTEND_URLS: ${FRONTEND_URLS:-http://localhost:8081,http://localhost:4200,http://localhost:5173}
+      FRONTEND_URLS: ${FRONTEND_URLS:-http://localhost:8081,http://localhost:4200,http://localhost:5174}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-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}
-      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
-      GITHUB_OWNER: ${GITHUB_OWNER:-}
-      GITHUB_REPO: ${GITHUB_REPO:-}
-      JIRA_HOST: ${JIRA_HOST:-}
-      JIRA_EMAIL: ${JIRA_EMAIL:-}
-      JIRA_API_TOKEN: ${JIRA_API_TOKEN:-}
-      JIRA_PROJECT_KEY: ${JIRA_PROJECT_KEY:-}
+      # GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      # GITHUB_OWNER: ${GITHUB_OWNER:-}
+      # GITHUB_REPO: ${GITHUB_REPO:-}
+      # JIRA_HOST: ${JIRA_HOST:-}
+      # JIRA_EMAIL: ${JIRA_EMAIL:-}
+      # JIRA_API_TOKEN: ${JIRA_API_TOKEN:-}
+      # JIRA_PROJECT_KEY: ${JIRA_PROJECT_KEY:-}
     ports:
       - "${BACKEND_PORT:-5001}:5000"
 
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-      args:
-        VITE_API_BASE_URL: /api
-    image: apiflow-frontend:local
+    # build:
+    #   context: ./frontend
+    #   dockerfile: Dockerfile
+    #   args:
+    #     VITE_API_BASE_URL: /api
+    image: ghcr.io/gnapi-tech/api-flow/apiflow-frontend:0.0.19
     pull_policy: never
     container_name: api-flow-frontend
     restart: unless-stopped
